@@ -1,0 +1,349 @@
+{
+  "version": "1.0",
+  "events": [
+    {
+      "id": "official_new_art", "name": "공식 신규 일러스트", "category": "official", "icon": "🎨",
+      "probability": 0.07,
+      "conditions": { "genreType": "official_fandom" },
+      "effects": { "followers": { "min": 20, "max": 80 }, "fame": { "min": 5, "max": 15 }, "mental": { "min": 5, "max": 15 } },
+      "message": "공식이 신규 일러스트를 투하했다! 탐라가 들썩인다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "official_goods_announce", "name": "공식 굿즈 발표", "category": "official", "icon": "🛍️",
+      "probability": 0.06,
+      "conditions": { "genreType": "official_fandom" },
+      "effects": { "followers": { "min": 10, "max": 40 }, "mental": 5 },
+      "message": "공식 굿즈 발매 공지가 떴다. 지갑이 긴장한다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "official_story_update", "name": "공식 스토리 업데이트", "category": "official", "icon": "📖",
+      "probability": 0.06,
+      "conditions": { "genreType": "official_fandom" },
+      "effects": { "followers": { "min": 15, "max": 60 }, "mental": { "min": -10, "max": 15 } },
+      "message": "공식 스토리가 업데이트됐다. 감정이 요동친다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "official_birthday", "name": "공식 생일", "category": "official", "icon": "🎂",
+      "probability": 0.5,
+      "conditions": { "character_birthday": true },
+      "effects": { "followers": { "min": 50, "max": 200 }, "fame": 20, "mental": 20 },
+      "message": "오늘은 최애의 공식 생일! 타임라인이 축하로 가득하다.",
+      "presentation": "fullscreen", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "art_viral", "name": "그림 대박 RT", "category": "creation", "icon": "🔥",
+      "probability": 0.05,
+      "conditions": { "recentPostExists": true },
+      "effects": { "followers": { "min": 30, "max": 150 }, "fame": { "min": 10, "max": 30 } },
+      "message": "올린 그림이 대박 났다! RT가 폭발한다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "small_but_warm_reaction", "name": "작지만 따뜻한 반응", "category": "creation", "icon": "🌱",
+      "probability": 0.1,
+      "conditions": {},
+      "effects": { "followers": { "min": 1, "max": 10 }, "mental": 10 },
+      "message": "소수지만 진심 어린 반응이 달렸다. 마음이 따뜻해진다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "no_reaction_slump", "name": "반응 저조", "category": "creation", "icon": "🦗",
+      "probability": 0.08,
+      "conditions": {},
+      "effects": { "followers": { "min": -5, "max": -1 }, "mental": -10 },
+      "message": "열심히 올렸는데 반응이 없다... 무명의 맛인가.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "big_account_quote", "name": "대형 계정 인용", "category": "creation", "icon": "📢",
+      "probability": 0.02,
+      "conditions": { "recentPostExists": true, "minFame": 20 },
+      "effects": { "followers": { "min": 80, "max": 300 }, "fame": 20 },
+      "message": "대형 계정이 내 게시물을 인용했다! 유입이 쏟아진다.",
+      "presentation": "fullscreen", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "fanart_received", "name": "팬아트 받음", "category": "creation", "icon": "💝",
+      "probability": 0.04,
+      "conditions": { "minFollowers": 30 },
+      "effects": { "followers": { "min": 10, "max": 50 }, "mental": 25 },
+      "message": "누군가 내 장르로 팬아트를 그려줬다! 감동의 눈물.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "goods_review_spread", "name": "굿즈 후기 확산", "category": "goods", "icon": "📦",
+      "probability": 0.06,
+      "conditions": { "goodsCount": 1 },
+      "effects": { "followers": { "min": 15, "max": 60 }, "sales": { "min": 10, "max": 30 } },
+      "message": "내 굿즈 후기가 퍼지고 있다. 주문 문의가 들어온다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "soldout_buzz", "name": "완판 소식 확산", "category": "goods", "icon": "🎉",
+      "probability": 0.04,
+      "conditions": { "goodsSoldOut": true },
+      "effects": { "followers": { "min": 20, "max": 80 }, "fame": 10 },
+      "message": "완판 소식이 탐라에 퍼졌다! 재판 요청이 쇄도한다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "restock_request", "name": "재판 문의 폭주", "category": "goods", "icon": "🔁",
+      "probability": 0.05,
+      "conditions": { "goodsCount": 1 },
+      "effects": { "followers": { "min": 5, "max": 20 }, "mental": -5 },
+      "message": "재판 문의가 폭주한다. 기쁘지만 부담스럽기도...",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "shipping_praise", "name": "포장 칭찬", "category": "goods", "icon": "🎁",
+      "probability": 0.05,
+      "conditions": { "goodsCount": 1 },
+      "effects": { "followers": { "min": 5, "max": 25 }, "fanTrust": 10 },
+      "message": "포장이 정성스럽다는 후기가 올라왔다. 팬 신뢰 상승!",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "shipping_issue", "name": "배송 문제", "category": "goods", "icon": "📮",
+      "probability": 0.04,
+      "conditions": { "goodsCount": 1 },
+      "effects": {},
+      "message": "배송 중 굿즈가 파손됐다는 멘션이 왔다. 어떻게 대응할까?",
+      "presentation": "modal",
+      "choices": [
+        { "label": "정중히 사과하고 재발송", "effects": { "fanTrust": 10, "mental": -5 } },
+        { "label": "환불 처리", "effects": { "fanTrust": 5 } },
+        { "label": "늦게 대응", "effects": { "fanTrust": -15, "followers": -10 } }
+      ],
+      "imageEventTrigger": null
+    },
+
+    {
+      "id": "event_afterglow", "name": "행사 후기 유입", "category": "event", "icon": "🎪",
+      "probability": 0.06,
+      "conditions": { "recentEventParticipated": true },
+      "effects": { "followers": { "min": 20, "max": 80 } },
+      "message": "행사 후기가 돌면서 새 팔로워가 들어온다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "booth_photo_viral", "name": "부스 사진 바이럴", "category": "event", "icon": "📸",
+      "probability": 0.03,
+      "conditions": { "recentEventParticipated": true },
+      "effects": { "followers": { "min": 30, "max": 120 }, "fame": 15 },
+      "message": "내 부스 사진이 바이럴 탔다! 다들 어디냐고 묻는다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "neighbor_circle_interaction", "name": "옆부스 교류", "category": "event", "icon": "🤝",
+      "probability": 0.05,
+      "conditions": { "recentEventParticipated": true },
+      "effects": { "followers": { "min": 5, "max": 30 }, "mental": 10 },
+      "message": "옆부스 작가님과 트친이 됐다. 훈훈한 교류.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "event_exhaustion", "name": "행사 후유증", "category": "event", "icon": "😵",
+      "probability": 0.05,
+      "conditions": { "recentEventParticipated": true },
+      "effects": { "stamina": -25, "followers": { "min": 0, "max": 10 } },
+      "message": "행사 후유증으로 몸이 천근만근... 그래도 보람 있었다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "event_manner_issue", "name": "행사장 민폐 논란", "category": "event", "icon": "⚠️",
+      "probability": 0.02,
+      "conditions": { "recentEventParticipated": true },
+      "effects": { "followers": { "min": -20, "max": -5 }, "mental": -10 },
+      "message": "행사장 민폐 논란에 휩쓸렸다. 탐라가 싸늘하다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "interpretation_debate", "name": "캐해석 논쟁", "category": "fandom", "icon": "💬",
+      "probability": 0.04,
+      "conditions": {},
+      "effects": {},
+      "message": "내 최애 캐해석을 두고 탐라에서 논쟁이 붙었다. 어떻게 할까?",
+      "presentation": "modal",
+      "choices": [
+        { "label": "조용히 지켜본다", "effects": { "mental": -5 } },
+        { "label": "내 해석을 올린다", "effects": { "followers": { "min": -30, "max": 30 }, "mental": -10, "fame": 5 } },
+        { "label": "잠시 SNS를 쉰다", "effects": { "mental": 10, "engagement": -10 } }
+      ],
+      "imageEventTrigger": null
+    },
+    {
+      "id": "cp_discussion", "name": "CP 논쟁", "category": "fandom", "icon": "💢",
+      "probability": 0.03,
+      "conditions": { "cpExists": true },
+      "effects": { "followers": { "min": -10, "max": 30 }, "mental": -20 },
+      "message": "CP 해석을 두고 탐라가 시끄럽다. 멘탈이 깎인다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "fandom_warm_event", "name": "팬덤 훈훈한 사건", "category": "fandom", "icon": "🌷",
+      "probability": 0.05,
+      "conditions": {},
+      "effects": { "followers": { "min": 10, "max": 40 }, "mental": 15 },
+      "message": "팬덤에 훈훈한 사건이 있었다. 역시 우리 장르 사람들 최고.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "fandom_split", "name": "팬덤 분열", "category": "fandom", "icon": "💔",
+      "probability": 0.02,
+      "conditions": { "minFame": 60 },
+      "effects": { "followers": { "min": -80, "max": -20 }, "mental": -25 },
+      "message": "팬덤이 둘로 갈라졌다. 탈팔이 줄을 잇는다...",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "algorithm_pickup", "name": "알고리즘 픽업", "category": "sns", "icon": "✨",
+      "probability": 0.008,
+      "conditions": { "minFame": 10, "recentPostExists": true },
+      "effects": { "followers": { "min": 100, "max": 500 }, "fame": 30, "mental": { "min": 15, "max": 25 }, "engagement": 100 },
+      "message": "게시물이 알고리즘에 잡혔다. 알림이 무섭게 쌓인다.",
+      "presentation": "fullscreen", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "hashtag_trend", "name": "해시태그 유행", "category": "sns", "icon": "#️⃣",
+      "probability": 0.04,
+      "conditions": { "minFame": 10 },
+      "effects": { "followers": { "min": 30, "max": 100 }, "fame": 10 },
+      "message": "내 장르 해시태그가 유행을 탄다! 유입 급증.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "random_unfollow", "name": "갑작스러운 언팔", "category": "sns", "icon": "💧",
+      "probability": 0.07,
+      "conditions": {},
+      "effects": { "followers": { "min": -5, "max": -1 }, "mental": -5 },
+      "message": "팔로워가 슬그머니 줄었다. 이유는 모르겠다...",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "quiet_day", "name": "조용한 하루", "category": "sns", "icon": "🍃",
+      "probability": 0.25,
+      "conditions": {},
+      "effects": { "followers": { "min": 0, "max": 3 } },
+      "message": "오늘 탐라는 평화롭고 조용하다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "old_post_resurface", "name": "예전 게시물 재발견", "category": "sns", "icon": "🕰️",
+      "probability": 0.04,
+      "conditions": {},
+      "effects": { "followers": { "min": 10, "max": 70 } },
+      "message": "예전에 올린 게시물이 갑자기 다시 돌고 있다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "new_genre_interest", "name": "새 장르 관심", "category": "multi", "icon": "👀",
+      "probability": 0.03,
+      "conditions": {},
+      "effects": {},
+      "message": "요즘 다른 장르가 자꾸 눈에 들어온다. 어떻게 할까?",
+      "presentation": "modal",
+      "choices": [
+        { "label": "새 장르를 만든다", "effects": {}, "createGenreTrigger": true },
+        { "label": "지금 장르에 집중한다", "effects": { "focus": 5, "mental": 5 } },
+        { "label": "일단 구경만 한다", "effects": {} }
+      ],
+      "imageEventTrigger": null
+    },
+    {
+      "id": "multi_genre_overlap", "name": "장르 겹친 팬", "category": "multi", "icon": "🔗",
+      "probability": 0.05,
+      "conditions": {},
+      "effects": { "followers": { "min": 10, "max": 40 }, "fanTrust": 5 },
+      "message": "나랑 장르가 겹치는 팬을 발견했다. 반가움 MAX.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "old_genre_revival", "name": "예전 장르 재주목", "category": "multi", "icon": "🌅",
+      "probability": 0.03,
+      "conditions": {},
+      "effects": { "followers": { "min": 20, "max": 100 }, "mental": 20 },
+      "message": "예전에 파던 장르가 다시 주목받는다. 추억이 새록새록.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "genre_fatigue", "name": "다장르 관리 피로", "category": "multi", "icon": "😮‍💨",
+      "probability": 0.09,
+      "conditions": { "minGenres": 2 },
+      "effects": { "mental": -10, "stamina": -10 },
+      "message": "여러 장르를 챙기느라 지쳤다. 번아웃 주의.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "account_identity_conflict", "name": "계정 정체성 고민", "category": "account", "icon": "🪞",
+      "probability": 0.03,
+      "conditions": {},
+      "effects": {},
+      "message": "이 계정의 방향성에 대해 고민이 든다. 어떻게 할까?",
+      "presentation": "modal",
+      "choices": [
+        { "label": "장르 전문 계정으로 간다", "effects": { "fanTrust": 10, "engagement": 5 } },
+        { "label": "잡덕 계정으로 자유롭게", "effects": { "mental": 10, "followers": { "min": -10, "max": 10 } } },
+        { "label": "그냥 둔다", "effects": {} }
+      ],
+      "imageEventTrigger": null
+    },
+    {
+      "id": "pinned_post_update", "name": "고정글 정리", "category": "account", "icon": "📌",
+      "probability": 0.05,
+      "conditions": {},
+      "effects": { "followers": { "min": 5, "max": 20 }, "fanTrust": 5 },
+      "message": "고정글을 깔끔하게 정리했다. 신규 유입에 도움이 된다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+    {
+      "id": "profile_renewal", "name": "프로필 리뉴얼", "category": "account", "icon": "🎀",
+      "probability": 0.05,
+      "conditions": {},
+      "effects": { "followers": { "min": 3, "max": 15 }, "mental": 10 },
+      "message": "프로필을 새 단장했다. 기분이 산뜻하다.",
+      "presentation": "banner", "choices": null, "imageEventTrigger": null
+    },
+
+    {
+      "id": "cosplay_spotted", "name": "코스프레 발견", "category": "image", "icon": "🌸",
+      "probability": 0.04,
+      "conditions": { "minFame": 70 },
+      "effects": { "followers": { "min": 50, "max": 200 } },
+      "message": "내 최애를 코스한 사진이 탐라에 떴다!",
+      "presentation": "modal", "choices": null, "imageEventTrigger": "cosplay"
+    },
+    {
+      "id": "ita_bag_found", "name": "이타백 발견", "category": "image", "icon": "💙",
+      "probability": 0.04,
+      "conditions": { "minFame": 60, "goodsCount": 3 },
+      "effects": { "followers": { "min": 30, "max": 120 } },
+      "message": "누가 내 굿즈로 이타백을 꾸몄다! 영광이다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": "itabag"
+    },
+    {
+      "id": "birthday_cafe_opened", "name": "생일 카페", "category": "image", "icon": "🎂",
+      "probability": 0.02,
+      "conditions": { "minFame": 90 },
+      "effects": { "followers": { "min": 100, "max": 300 } },
+      "message": "최애 생일 카페가 열렸다! 전국에서 인증이 쏟아진다.",
+      "presentation": "fullscreen", "choices": null, "imageEventTrigger": "birthday_cafe"
+    },
+    {
+      "id": "booth_memory_photo", "name": "부스 기념 사진", "category": "image", "icon": "📷",
+      "probability": 0.04,
+      "conditions": { "recentEventParticipated": true },
+      "effects": { "followers": { "min": 50, "max": 150 } },
+      "message": "행사 부스 기념 사진이 추억으로 돌아왔다.",
+      "presentation": "modal", "choices": null, "imageEventTrigger": "booth"
+    }
+  ]
+}

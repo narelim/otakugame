@@ -1,0 +1,10 @@
+[
+  { "id":"meow_draw_",  "handle":"@meow_draw_",  "name":"먀오",   "avatar":"🐱", "bio":"같이 교류회 가는 친구. 그림체 비슷해서 자주 엮임",        "followers":320, "type":"friend_account", "hasVariables":false, "postStyle":["같이 가요 약속","합작 제안","서로 연성 알티"] },
+  { "id":"ppyong_",     "handle":"@ppyong_",     "name":"뾰옹",   "avatar":"🐣", "bio":"동네 메친. 다른 장르인데 행사는 같이 감",                 "followers":210, "type":"friend_account", "hasVariables":false, "postStyle":["행사 동행 인증","점심 메뉴 고민","서로 부스 지킴"] },
+  { "id":"sol_oc_",     "handle":"@sol_oc_",     "name":"솔",     "avatar":"🌙", "bio":"온리전 같이 처음 간 사람. 어색했는데 친해짐",             "followers":140, "type":"friend_account", "hasVariables":false, "postStyle":["첫 교류회 후기","트친소","어색 극복 썰"] },
+  { "id":"boo_sketch",  "handle":"@boo_sketch",  "name":"부",     "avatar":"✏️", "bio":"교류회에서 만난 작가님. 그림 진짜 잘 그림",               "followers":480, "type":"friend_account", "hasVariables":false, "postStyle":["즉석 낙서 선물","교류회 라인업 공유","합동 부스 제안"] },
+  { "id":"hani_cp_",    "handle":"@hani_cp_",    "name":"하니",   "avatar":"💞", "bio":"CP가 같아서 친해짐. 연성도 주고받음",                     "followers":260, "type":"friend_account", "hasVariables":false, "postStyle":["CP 떡밥 투척","연성 교환","같이 앓기"] },
+  { "id":"dodam_with",  "handle":"@dodam_with",  "name":"도담",   "avatar":"🍡", "bio":"교류회 단골 메친. 굿즈 같이 나눠 만듦",                   "followers":175, "type":"friend_account", "hasVariables":false, "postStyle":["공동 발주 모집","간식 나눔","부스 셋업 도움"] },
+  { "id":"yuju_meet",   "handle":"@yuju_meet",   "name":"유주",   "avatar":"🌿", "bio":"소규모 모임만 다니는 친구. 조용히 응원해줌",             "followers":98,  "type":"friend_account", "hasVariables":false, "postStyle":["조용한 응원","교류회 인증샷","수고했어 인사"] },
+  { "id":"kkomi_pair",  "handle":"@kkomi_pair",  "name":"꼬미",   "avatar":"🎐", "bio":"매번 같이 신청하는 짝꿍. 부스 옆자리 노림",               "followers":230, "type":"friend_account", "hasVariables":false, "postStyle":["옆자리 신청 인증","합동 굿즈","뒤풀이 약속"] }
+]

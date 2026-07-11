@@ -1,0 +1,1819 @@
+[
+  {
+    "handle": "@S2hana_cos",
+    "name": "🌸하나쨩🎀",
+    "avatar": "🌸",
+    "bio": "코스프레 5년차. 미소녀 캐릭터 전문",
+    "followers": 8400,
+    "type": "cosplayer",
+    "postStyle": [
+      "코스 인증",
+      "행사 후기",
+      "제작 과정"
+    ],
+    "id": "s2hana_cos",
+    "order": 1,
+    "hasVariables": false
+  },
+  {
+    "handle": "@mutjjinotaku",
+    "name": "엄마 저는 굿즈사는 멋진 어른으로 자랐어요",
+    "avatar": "🛍",
+    "bio": "굿즈 수집 5년차. 이타백 제작 중",
+    "followers": 3200,
+    "type": "goods_collector",
+    "postStyle": [
+      "굿즈 구매 인증",
+      "이타백 공개",
+      "행사 전리품"
+    ],
+    "id": "mutjjinotaku",
+    "order": 2,
+    "hasVariables": false
+  },
+  {
+    "handle": "@jin_review",
+    "name": "진",
+    "avatar": "📚",
+    "bio": "매달 서코 참가. 회지 리뷰 전문",
+    "followers": 5100,
+    "type": "reviewer",
+    "postStyle": [
+      "회지 리뷰",
+      "작가 추천",
+      "행사 정보"
+    ],
+    "id": "jin_review",
+    "order": 3,
+    "hasVariables": false
+  },
+  {
+    "handle": "@iamrealssipduk",
+    "name": "오타쿠 공감 짤봇",
+    "avatar": "🥹",
+    "bio": "덕질이 곧 삶",
+    "followers": 12000,
+    "type": "general",
+    "postStyle": [
+      "일상 덕질",
+      "짤 공유",
+      "입덕 권유"
+    ],
+    "id": "iamrealssipduk",
+    "order": 4,
+    "hasVariables": false
+  },
+  {
+    "handle": "@__cos_yuri",
+    "name": "유리 yuri",
+    "avatar": "🌟",
+    "bio": "중부권 코스어. 겹트친 환영, 무멘팔로 찾아가요.",
+    "followers": 1500,
+    "type": "cosplayer",
+    "postStyle": [
+      "코스 선행샷",
+      "행사 투샷",
+      "가발 세팅 과정"
+    ],
+    "id": "__cos_yuri",
+    "order": 5,
+    "hasVariables": false
+  },
+  {
+    "handle": "@podo_cm",
+    "name": "포도🍇(커미션⭕️)",
+    "avatar": "🎨",
+    "bio": "1차, 2차 다 그림. 불펌금지(DO NOT REPOST). AI🚫 FUB FREE",
+    "followers": 12500,
+    "type": "artist",
+    "postStyle": [
+      "일러스트 연성",
+      "커미션 홍보",
+      "새벽 낙서"
+    ],
+    "id": "podo_cm",
+    "order": 6,
+    "hasVariables": false
+  },
+  {
+    "handle": "@rungonggu",
+    "name": "거래/공구계(디엠후멘션)",
+    "avatar": "📦",
+    "bio": "플미 거래 안 합니다. 직거래는 홍대/합정. 배송은 매주 화,목",
+    "followers": 850,
+    "type": "trader",
+    "postStyle": [
+      "굿즈 양도",
+      "솜인형 공구 모집",
+      "미개봉 판매"
+    ],
+    "id": "rungonggu",
+    "order": 7,
+    "hasVariables": false
+  },
+  {
+    "handle": "@umai_",
+    "name": "환자 분은 심각한 활자 중독입니다.",
+    "avatar": "📖",
+    "bio": "텍스트 연성. 썰 백업용 포스타입. 멘션 확인 느립니다",
+    "followers": 4200,
+    "type": "story_teller",
+    "postStyle": [
+      "관계성 썰",
+      "캐해석 타래",
+      "포스타입 링크"
+    ],
+    "id": "umai_",
+    "order": 8,
+    "hasVariables": false
+  },
+  {
+    "handle": "@where_is_my_money",
+    "name": "({캐릭터명}아크릴 매입 중) 리아님",
+    "avatar": "🛍",
+    "bio": "굿즈 없인 못 살아. 아크릴/지류 환장함. 이타백 3개째 조립중",
+    "followers": 2800,
+    "type": "goods_collector",
+    "postStyle": [
+      "제단 샷",
+      "이타백 외출",
+      "굿즈깡 영상"
+    ],
+    "id": "where_is_my_money",
+    "order": 9,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@event_alarm",
+    "name": "행사 알림 봇",
+    "avatar": "📢",
+    "bio": "서코/일코/온리전/생카 일정 정리. 제보는 DM 부탁드립니다.",
+    "followers": 35000,
+    "type": "event_reporter",
+    "postStyle": [
+      "주간 행사 일정",
+      "부스 인포 리트윗",
+      "티켓팅 공지"
+    ],
+    "id": "event_alarm",
+    "order": 10,
+    "hasVariables": false
+  },
+  {
+    "handle": "@v_taku_01",
+    "name": "Ilo",
+    "avatar": "🎧",
+    "bio": "버튜버 클립 따고 방송 달립니다. 스포주의. 팬심으로 클립 깎는 노인",
+    "followers": 5300,
+    "type": "vtuber_fan",
+    "postStyle": [
+      "방송 클립",
+      "라이브 감상",
+      "버튜버 굿즈 인증"
+    ],
+    "id": "v_taku_01",
+    "order": 11,
+    "hasVariables": false
+  },
+  {
+    "handle": "@cos_shadow",
+    "name": "👻",
+    "avatar": "🖤",
+    "bio": "다크/빌런 코스프레 위주. 사진사 분들 항상 감사합니다. 갠촬 환영",
+    "followers": 6200,
+    "type": "cosplayer",
+    "postStyle": [
+      "스튜디오 갠촬",
+      "보정 전후",
+      "컨셉 촬영"
+    ],
+    "id": "cos_shadow",
+    "order": 12,
+    "hasVariables": false
+  },
+  {
+    "handle": "@daily_croquis",
+    "name": "매일크로키하는계정",
+    "avatar": "✏️",
+    "bio": "그림 연습. 가끔 팬아트. 취미로 그립니다. 피드백 환영",
+    "followers": 2100,
+    "type": "artist",
+    "postStyle": [
+      "크로키",
+      "스케치",
+      "그림체 발전 과정"
+    ],
+    "id": "daily_croquis",
+    "order": 13,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{캐릭터명 영어로}P",
+    "name": "{캐릭터명} 이벤스 스포 뮤트",
+    "avatar": "🎤",
+    "bio": "2D 아이돌 리듬게임 주력. 오시 이벤트 IN 100 달리는 중",
+    "followers": 1750,
+    "type": "idol_fan",
+    "postStyle": [
+      "이벤트 랭킹 인증",
+      "리듬게임 풀콤보",
+      "캐릭터 생일 축하"
+    ],
+    "id": "캐릭터명_영어로p",
+    "order": 14,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name"
+    ]
+  },
+  {
+    "handle": "@zzal_storage",
+    "name": "짤털",
+    "avatar": "🗂",
+    "bio": "덕질용 짤방 아카이빙. 적절할 때 쓰세요. 출처는 타래로",
+    "followers": 18500,
+    "type": "general",
+    "postStyle": [
+      "상황별 짤",
+      "오타쿠 밈",
+      "웃긴 캡처"
+    ],
+    "id": "zzal_storage",
+    "order": 15,
+    "hasVariables": false
+  },
+  {
+    "handle": "@indieReview",
+    "name": "인디게임 리뷰",
+    "avatar": "🎮",
+    "bio": "스팀/모바일 인디게임 리뷰. 취향에 맞는 게임만 골라서 합니다.",
+    "followers": 4100,
+    "type": "reviewer",
+    "postStyle": [
+      "게임 리뷰 타래",
+      "할인 정보",
+      "숨은 갓겜 추천"
+    ],
+    "id": "indiereview",
+    "order": 16,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{cp명 영어로}_nsfw",
+    "name": "달",
+    "avatar": "🌙",
+    "bio": "NSFW, 취향 타는 소재 주의",
+    "followers": 7800,
+    "type": "story_teller",
+    "postStyle": [
+      "꾸금 썰",
+      "분위기 있는 문장",
+      "단편 조각글"
+    ],
+    "id": "cp명_영어로_nsfw",
+    "order": 17,
+    "hasVariables": true,
+    "variableFields": [
+      "handle"
+    ]
+  },
+  {
+    "handle": "@sachi_{캐릭터명 영어}_oshi",
+    "name": "SACHI",
+    "avatar": "🎒",
+    "bio": "이타백 꾸미기 장인. 캔뱃지/파샤 매입 중. 디스플레이 팁 공유",
+    "followers": 3900,
+    "type": "goods_collector",
+    "postStyle": [
+      "이타백 완성샷",
+      "굿즈 배치 팁",
+      "준비물 추천"
+    ],
+    "id": "sachi_캐릭터명_영어_oshi",
+    "order": 18,
+    "hasVariables": true,
+    "variableFields": [
+      "handle"
+    ]
+  },
+  {
+    "handle": "@nyannyan_maomao",
+    "name": "🖤",
+    "avatar": "🎀",
+    "bio": "🎀🖤💌✨",
+    "followers": 1200,
+    "type": "general",
+    "postStyle": [
+      "오오티디(OOTD)",
+      "산리오 굿즈",
+      "컨셉 카페 후기"
+    ],
+    "id": "nyannyan_maomao",
+    "order": 19,
+    "hasVariables": false
+  },
+  {
+    "handle": "@gonggu_master",
+    "name": "솜깅이 공구🧸",
+    "avatar": "🧵",
+    "bio": "중국/국내 솜인형 무속성 솜인형 공구 진행. 공지는 타래 확인",
+    "followers": 15000,
+    "type": "trader",
+    "postStyle": [
+      "공구 오픈 안내",
+      "생산 샘플 사진",
+      "배송 현황 공지"
+    ],
+    "id": "gonggu_master",
+    "order": 20,
+    "hasVariables": false
+  },
+  {
+    "handle": "@papattai",
+    "name": "(커미션 중)팟타이",
+    "avatar": "🧟",
+    "bio": "장르 잡덕. 이것저것 다 주워먹음. 요즘은 판소 보는 중",
+    "followers": 950,
+    "type": "general",
+    "postStyle": [
+      "새 장르 찍먹",
+      "탐라 유행 탑승",
+      "잡담"
+    ],
+    "id": "papattai",
+    "order": 21,
+    "hasVariables": false
+  },
+  {
+    "handle": "@LooA_cos",
+    "name": "루아 코스계",
+    "avatar": "🐣",
+    "bio": "코스프레 시작한 지 3개월. 메이크업 연습 중. 친해지기 쉬워요!",
+    "followers": 450,
+    "type": "cosplayer",
+    "postStyle": [
+      "집코(집에서 코스프레)",
+      "메이크업 질문",
+      "행사 첫 참가 후기"
+    ],
+    "id": "looa_cos",
+    "order": 22,
+    "hasVariables": false
+  },
+  {
+    "handle": "@sajangnim_mollae",
+    "name": "만화카페알바생",
+    "avatar": "☕",
+    "bio": "만화 카페 알바생. 신작 만화 리뷰. 종이책 수집가",
+    "followers": 3200,
+    "type": "reviewer",
+    "postStyle": [
+      "신간 만화 리뷰",
+      "만화방 먹방",
+      "만화책 책장 인증"
+    ],
+    "id": "sajangnim_mollae",
+    "order": 23,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{장르명 영어}_oO",
+    "name": "HAN",
+    "avatar": "⚙️",
+    "bio": "논컾 중심 관계성 썰 풀어요. 우정/가족 서사 환장함. 구독 환영",
+    "followers": 6100,
+    "type": "story_teller",
+    "postStyle": [
+      "논컾 썰",
+      "if 설정 타래",
+      "캐릭터 심리 분석"
+    ],
+    "id": "장르명_영어_oo",
+    "order": 24,
+    "hasVariables": true,
+    "variableFields": [
+      "handle"
+    ]
+  },
+  {
+    "handle": "@CHU_gogogogo",
+    "name": "추",
+    "avatar": "🖍",
+    "bio": "낙서장. GL/HL/BL 다 먹음. 지뢰는 알아서 피해가요. 체력거지",
+    "followers": 3400,
+    "type": "artist",
+    "postStyle": [
+      "의식의 흐름 낙서",
+      "1차 창작 캐릭터",
+      "트친소"
+    ],
+    "id": "chu_gogogogo",
+    "order": 25,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{캐릭터명 영어로}_dream",
+    "name": "{캐릭터 이모지}",
+    "avatar": "💍",
+    "bio": "{캐릭터명}  단일오시. 고정충. 1t1d",
+    "followers": 520,
+    "type": "general",
+    "postStyle": [
+      "단일오시 주접",
+      "공식 굿즈 매입",
+      "캐릭터 생일 제단"
+    ],
+    "id": "캐릭터명_영어로_dream",
+    "order": 26,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@ruru_closet",
+    "name": "🍡ruru(공구 진행 중)",
+    "avatar": "🎀",
+    "bio": "넨도로이드, 오비츠 개조 및 옷 입히기. 예절샷 가끔 올라옴",
+    "followers": 128,
+    "type": "goods_collector",
+    "postStyle": [
+      "피규어 외출 사진",
+      "개조 과정",
+      "소품 구매 후기"
+    ],
+    "id": "ruru_closet",
+    "order": 27,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{장르명 영어로}_{캐릭터명 영어로}",
+    "name": "{캐릭터 이모지}",
+    "avatar": "{캐릭터 이모지}",
+    "bio": "{캐릭터명} 오시. 게임 스샷 백업. 스포일러 많음. 혼잣말 위주",
+    "followers": 95,
+    "type": "gamer",
+    "postStyle": [
+      "가챠 결과",
+      "스토리 스샷",
+      "최애 앓이"
+    ],
+    "id": "장르명_영어로_캐릭터명_영어로",
+    "order": 28,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@sub0_0",
+    "name": "구독",
+    "avatar": "👀",
+    "bio": "연성 잘 보고 있습니다 (마음만 찍음). 알티 많아요",
+    "followers": 4,
+    "type": "general",
+    "postStyle": [
+      "알티",
+      "마음",
+      "가끔 주접 인용"
+    ],
+    "id": "sub0_0",
+    "order": 29,
+    "hasVariables": false
+  },
+  {
+    "handle": "@isekai_please",
+    "name": "사축 OL인 나는 왜 이세계로 가지 못할까",
+    "avatar": "☕",
+    "bio": "퇴근 기원. 굿즈 살 돈 벌러 가는 직장인. 탐라 마리모처럼 둬주세요",
+    "followers": 112,
+    "type": "general",
+    "postStyle": [
+      "퇴근 염원",
+      "일상 한탄",
+      "월급 탕진 인증"
+    ],
+    "id": "isekai_please",
+    "order": 30,
+    "hasVariables": false
+  },
+  {
+    "handle": "@brickisred",
+    "name": "벽돌",
+    "avatar": "🧱",
+    "bio": "장르 스포일러 다수. 뮤트 권장. 아무 말이나 막 씁니다",
+    "followers": 27,
+    "type": "general",
+    "postStyle": [
+      "새벽 감성",
+      "캐해석 타래",
+      "의식의 흐름"
+    ],
+    "id": "brickisred",
+    "order": 31,
+    "hasVariables": false
+  },
+  {
+    "handle": "@ghkfwkwndehr",
+    "name": "ㅇㅇ",
+    "avatar": "🔖",
+    "bio": "포스타입 링크 저장용. 썰 백업용. 팔로우 맘대로",
+    "followers": 8,
+    "type": "story_teller",
+    "postStyle": [
+      "북마크 링크",
+      "짧은 감상",
+      "비밀번호 힌트 앓이"
+    ],
+    "id": "ghkfwkwndehr",
+    "order": 32,
+    "hasVariables": false
+  },
+  {
+    "handle": "@ninja_hiya",
+    "name": "하이야",
+    "avatar": "🎒",
+    "bio": "서코, 일코 혼자 감. 조용히 굿즈만 사고 옵니다. 트친소 안함",
+    "followers": 102,
+    "type": "general",
+    "postStyle": [
+      "행사장 줄 인증",
+      "조촐한 전리품",
+      "발 아프다"
+    ],
+    "id": "ninja_hiya",
+    "order": 33,
+    "hasVariables": false
+  },
+  {
+    "handle": "@hoshi_star",
+    "name": "호시양",
+    "avatar": "🌟",
+    "bio": "2D 아이돌 리듬게임 유저. 무소과금. 느긋하게 플레이 중",
+    "followers": 144,
+    "type": "idol_fan",
+    "postStyle": [
+      "이벤트 보상 컷",
+      "덱 상담",
+      "최애 생일 챙기기"
+    ],
+    "id": "hoshi_star",
+    "order": 34,
+    "hasVariables": false
+  },
+  {
+    "handle": "@dumdumdumdum",
+    "name": "교수님 머리 위에서 춤춰 덤덤",
+    "avatar": "📝",
+    "bio": "과제하기 싫다... {캐릭터명} 얼굴 최고. 기말고사 끝나면 돌아옴",
+    "followers": 210,
+    "type": "general",
+    "postStyle": [
+      "과제 한탄",
+      "시험기간 덕질",
+      "현생 도피"
+    ],
+    "id": "dumdumdumdum",
+    "order": 35,
+    "hasVariables": true,
+    "variableFields": [
+      "bio"
+    ]
+  },
+  {
+    "handle": "@208107462",
+    "name": "이원",
+    "avatar": "🕰️",
+    "bio": "한 장르만 5년째 파는 중. 뉴비 오면 밥 사드림",
+    "followers": 175,
+    "type": "general",
+    "postStyle": [
+      "추억 팔이",
+      "뉴비 관찰",
+      "공식 기원"
+    ],
+    "id": "208107462",
+    "order": 36,
+    "hasVariables": false
+  },
+  {
+    "handle": "@isanghamsaram_anieyo",
+    "name": "(거래계){장르명}{캐릭터명}굿즈 구함",
+    "avatar": "🙏",
+    "bio": "{캐릭터명} 아크릴 스탠드 구해요. 플미 사절. 디엠 후 멘션 요망",
+    "followers": 15,
+    "type": "goods_collector",
+    "postStyle": [
+      "양도 구함 글",
+      "끌올",
+      "거래 완료"
+    ],
+    "id": "isanghamsaram_anieyo",
+    "order": 37,
+    "hasVariables": true,
+    "variableFields": [
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@zzzzzzzzzzzzz____",
+    "name": "Z",
+    "avatar": "💤",
+    "bio": "탐라 대화 잘 못 끼는 편... 마음 요정입니다. 소심함",
+    "followers": 88,
+    "type": "general",
+    "postStyle": [
+      "조용한 알티",
+      "탐라 눈팅",
+      "야식 고민"
+    ],
+    "id": "zzzzzzzzzzzzz____",
+    "order": 38,
+    "hasVariables": false
+  },
+  {
+    "handle": "@imfine_",
+    "name": "그지",
+    "avatar": "🪙",
+    "bio": "용돈 받아서 덕질하는 학생. 굿즈는 지류 위주로만 삼ㅠㅠ",
+    "followers": 250,
+    "type": "goods_collector",
+    "postStyle": [
+      "엽서 바인더 자랑",
+      "돈 모으기 다짐",
+      "급전 커미션 구경"
+    ],
+    "id": "imfine_",
+    "order": 39,
+    "hasVariables": false
+  },
+  {
+    "handle": "@doll_mom_",
+    "name": "솜뭉치맘",
+    "avatar": "🧸",
+    "bio": "20cm 솜인형 위주. 옷 갈아입히는 게 낙입니다. 외출 사진 가끔",
+    "followers": 190,
+    "type": "goods_collector",
+    "postStyle": [
+      "인형 옷 입히기",
+      "카페 예절샷",
+      "솜 세탁 후기"
+    ],
+    "id": "doll_mom_",
+    "order": 40,
+    "hasVariables": false
+  },
+  {
+    "handle": "@otaku_bab",
+    "name": "밥",
+    "avatar": "🍜",
+    "bio": "오타쿠 예절샷 용도. 매일 먹는 거 올림. 음식 사진 주의",
+    "followers": 305,
+    "type": "general",
+    "postStyle": [
+      "예절샷",
+      "오늘의 메뉴",
+      "맛집 탐방"
+    ],
+    "id": "otaku_bab",
+    "order": 41,
+    "hasVariables": false
+  },
+  {
+    "handle": "@cos_shadow2",
+    "name": "그림자(본계)",
+    "avatar": "👤",
+    "bio": "코스계는 따로 있음. 여긴 그냥 일상 잡담 + 아무말 하는 곳",
+    "followers": 115,
+    "type": "general",
+    "postStyle": [
+      "일상 투덜거림",
+      "다이어트 실패",
+      "재료비 한탄"
+    ],
+    "id": "cos_shadow2",
+    "order": 42,
+    "hasVariables": false
+  },
+  {
+    "handle": "@odn29ehd722",
+    "name": "장르계",
+    "avatar": "🔥",
+    "bio": "어제 입덕함. 뉴비 좀 살려주세요. 뭐부터 봐야 하나요",
+    "followers": 40,
+    "type": "general",
+    "postStyle": [
+      "입덕 부정기 끝",
+      "원작 정주행 타래",
+      "오열"
+    ],
+    "id": "odn29ehd722",
+    "order": 43,
+    "hasVariables": false
+  },
+  {
+    "handle": "@handjichim",
+    "name": "(메인 포스트 판매글)SUJICHIM",
+    "avatar": "🎎",
+    "bio": "스케일 피규어 가끔 삼. 먼지 털기 귀찮아. 공간 부족",
+    "followers": 270,
+    "type": "goods_collector",
+    "postStyle": [
+      "장식장 정리",
+      "예약 뜬 거 공유",
+      "택배 언박싱"
+    ],
+    "id": "handjichim",
+    "order": 44,
+    "hasVariables": false
+  },
+  {
+    "handle": "@snail_draw00",
+    "name": "달팽이 그림계",
+    "avatar": "🐌",
+    "bio": "아주 가끔 낙서 올림. 연성 속도 매우 느림. 기력 없음",
+    "followers": 160,
+    "type": "artist",
+    "postStyle": [
+      "선화",
+      "러프",
+      "그리다 만 것들"
+    ],
+    "id": "snail_draw00",
+    "order": 45,
+    "hasVariables": false
+  },
+  {
+    "handle": "@_banchanggo_",
+    "name": "반창고가되",
+    "avatar": "🩹",
+    "bio": "스포주의. 최애 굴리는 거(물리적/정신적) 좋아함. 취향 타요",
+    "followers": 92,
+    "type": "story_teller",
+    "postStyle": [
+      "유혈 썰",
+      "피폐물 타래",
+      "사망 소재"
+    ],
+    "id": "_banchanggo_",
+    "order": 46,
+    "hasVariables": false
+  },
+  {
+    "handle": "@magamsong",
+    "name": "노동요 추천(곡추천DM)",
+    "avatar": "🎧",
+    "bio": "작업할 때 듣는 애니/게임 브금 공유. 취향 맞는 분만",
+    "followers": 105,
+    "type": "general",
+    "postStyle": [
+      "유튜브 링크",
+      "가사 앓이",
+      "음악 추천"
+    ],
+    "id": "magamsong",
+    "order": 47,
+    "hasVariables": false
+  },
+  {
+    "handle": "@life_is_potato",
+    "name": "MIN🍟",
+    "avatar": "🛒",
+    "bio": "연성 못함. 회지랑 굿즈 사모으는 게 유일한 취미",
+    "followers": 72,
+    "type": "general",
+    "postStyle": [
+      "행사 후기",
+      "회지 탑 쌓기",
+      "부스 칭찬"
+    ],
+    "id": "life_is_potato",
+    "order": 48,
+    "hasVariables": false
+  },
+  {
+    "handle": "@alone_in_sea",
+    "name": "심해어🫧🫧",
+    "avatar": "🫧",
+    "bio": "장르 파는 사람 저밖에 없나요? 혼잣말 99%. 지뢰 알아서 피해갑니다",
+    "followers": 8,
+    "type": "general",
+    "postStyle": [
+      "장르 한탄",
+      "혼잣말",
+      "공식 떡밥 기원"
+    ],
+    "id": "alone_in_sea",
+    "order": 49,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{cp명 영어로}_2",
+    "name": "{cp명}파면머리가자라나고A받고성공신화가시작됨",
+    "avatar": "🔒",
+    "bio": "{cp명} 외에 안 봅니다. 리버스 절대 금지. 타 CP 직멘 X. 혼자 앓아요",
+    "followers": 23,
+    "type": "general",
+    "postStyle": [
+      "CP 연성 앓이",
+      "원작 대사 분석",
+      "관계성 썰"
+    ],
+    "id": "cp명_영어로_2",
+    "order": 50,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@{cp명 영어로}_is_real",
+    "name": "나한테는메이저라고",
+    "avatar": "☠️",
+    "bio": "접점 없는 마이너 CP만 골라 먹음. 위장 튼튼합니다. 저랑 덕톡하실 분",
+    "followers": 15,
+    "type": "story_teller",
+    "postStyle": [
+      "사약 영업",
+      "IF 썰",
+      "날조 연성"
+    ],
+    "id": "cp명_영어로_is_real",
+    "order": 51,
+    "hasVariables": true,
+    "variableFields": [
+      "handle"
+    ]
+  },
+  {
+    "handle": "@pleaseSSR",
+    "name": "쑤님 또 천장침?",
+    "avatar": "💸",
+    "bio": "리듬게임/가챠게임 다수. 픽뚫 그만해 제발. 게임 스샷만 올라옵니다",
+    "followers": 41,
+    "type": "gamer",
+    "postStyle": [
+      "가챠 폭사 인증",
+      "게임 렉 한탄",
+      "이벤트 컷 확인"
+    ],
+    "id": "pleasessr",
+    "order": 52,
+    "hasVariables": false
+  },
+  {
+    "handle": "@michiguangii",
+    "name": "산미치광이",
+    "avatar": "😭",
+    "bio": "현재 방영작 달리는 중. 스포일러 필터링 안 합니다. 뮤트 권장",
+    "followers": 38,
+    "type": "general",
+    "postStyle": [
+      "방영일 실시간 비명",
+      "애니 캡처",
+      "다음화 궁예"
+    ],
+    "id": "michiguangii",
+    "order": 53,
+    "hasVariables": false
+  },
+  {
+    "handle": "@vi11iain_s2s2",
+    "name": "X",
+    "avatar": "🖤",
+    "bio": "적폐 캐해 주의. 악역 미화 있음",
+    "followers": 27,
+    "type": "general",
+    "postStyle": [
+      "악역 서사 앓이",
+      "if 구원 서사",
+      "디자인 찬양"
+    ],
+    "id": "vi11iain_s2s2",
+    "order": 54,
+    "hasVariables": false
+  },
+  {
+    "handle": "@cjtrPwjd_",
+    "name": "2기언제나와",
+    "avatar": "🙏",
+    "bio": "원작은 다 읽었는데 애니 2기 왜 안 주냐. 제작사 방향으로 매일 절함",
+    "followers": 48,
+    "type": "general",
+    "postStyle": [
+      "제작사 원망",
+      "방영 기원",
+      "원작 명장면 요약"
+    ],
+    "id": "cjtrpwjd_",
+    "order": 55,
+    "hasVariables": false
+  },
+  {
+    "handle": "@extral0v3",
+    "name": "삽",
+    "avatar": "👤",
+    "bio": "출연량 3분인 엑스트라 잡고 웁니다. 굿즈 없어서 자체 제작함",
+    "followers": 9,
+    "type": "general",
+    "postStyle": [
+      "출연 분량 한탄",
+      "자급자족 연성",
+      "굿즈 발매 기원"
+    ],
+    "id": "extral0v3",
+    "order": 56,
+    "hasVariables": false
+  },
+  {
+    "handle": "@gamessbackup",
+    "name": "{장르명} 스샷 백업",
+    "avatar": "📸",
+    "bio": "콘솔/PC 게임 스샷 백업용. 교류 목적 아님. 마음만 찍음",
+    "followers": 6,
+    "type": "gamer",
+    "postStyle": [
+      "풍경 스샷",
+      "컷신 캡처",
+      "장비 세팅 기록"
+    ],
+    "id": "gamessbackup",
+    "order": 57,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@ggondae",
+    "name": "한비",
+    "avatar": "📚",
+    "bio": "원작만 먹는다",
+    "followers": 35,
+    "type": "reviewer",
+    "postStyle": [
+      "원작 비교",
+      "번역 상태 한탄",
+      "신간 발매일 알림"
+    ],
+    "id": "ggondae",
+    "order": 58,
+    "hasVariables": false
+  },
+  {
+    "handle": "@vlvPwhdk",
+    "name": "피폐물수집가",
+    "avatar": "🩸",
+    "bio": "주인공 구르는 거 좋아함. 찌통/새드엔딩 환영. FUB FREE",
+    "followers": 25,
+    "type": "story_teller",
+    "postStyle": [
+      "찌통 연성 알티",
+      "사망 소재 썰",
+      "피폐한 대사 인용"
+    ],
+    "id": "vlvpwhdk",
+    "order": 59,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{cp명 영어로 변형}only",
+    "name": "{장르명} {cp명}파는계정",
+    "avatar": "🔋",
+    "bio": "{cp명} 조합. 아무도 안 파길래 저 혼자 파요. 알람 꺼둠",
+    "followers": 5,
+    "type": "general",
+    "postStyle": [
+      "망상 썰",
+      "투샷 캡처(억지)",
+      "외로움"
+    ],
+    "id": "cp명_영어로_변형only",
+    "order": 60,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@oh_sexy_voice",
+    "name": "{성우명} 드씨 발매 많관부",
+    "avatar": "🎤",
+    "bio": "성우 따라다닙니다. 드씨/라디오 챙겨들음. 귀가 녹아요",
+    "followers": 18,
+    "type": "general",
+    "postStyle": [
+      "연기력 찬양",
+      "라디오 번역",
+      "이벤트 후기"
+    ],
+    "id": "oh_sexy_voice",
+    "order": 61,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@coffee_yes",
+    "name": "NaO",
+    "avatar": "☕",
+    "bio": "머리 비우고 보는 일상물/치유물 봅니다. 스트레스 받는 장르 못 봐요",
+    "followers": 29,
+    "type": "general",
+    "postStyle": [
+      "힐링 명장면",
+      "귀여운 짤",
+      "애니 음식 캡처"
+    ],
+    "id": "coffee_yes",
+    "order": 62,
+    "hasVariables": false
+  },
+  {
+    "handle": "@10yearslater",
+    "name": "{장르명}극장판 언제 나오냐",
+    "avatar": "🎬",
+    "bio": "특전 모으러 10회차 관람 예정. 스포일러 뮤트 단어 등록 필수",
+    "followers": 16,
+    "type": "general",
+    "postStyle": [
+      "특전 현황",
+      "영화 감상평",
+      "N회차 예매 인증"
+    ],
+    "id": "10yearslater",
+    "order": 63,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@magigyaruS2S2",
+    "name": "✨💗",
+    "avatar": "🪄",
+    "bio": "변신씬 뱅크씬에 환장하는 오타쿠. 완구류 수집합니다",
+    "followers": 36,
+    "type": "goods_collector",
+    "postStyle": [
+      "변신 아이템 자랑",
+      "의상 디자인 분석",
+      "마법 주문 앓이"
+    ],
+    "id": "magigyarus2s2",
+    "order": 64,
+    "hasVariables": false
+  },
+  {
+    "handle": "@sports_gay_",
+    "name": "요즘 스포츠 게이가 제철이더라",
+    "avatar": "🏀",
+    "bio": "스포츠물 달립니다. 땀 흘리는 청춘들 최고. 타학교 최애",
+    "followers": 44,
+    "type": "general",
+    "postStyle": [
+      "경기 결과 오열",
+      "부원들 관계성",
+      "합숙 에피소드 앓이"
+    ],
+    "id": "sports_gay_",
+    "order": 65,
+    "hasVariables": false
+  },
+  {
+    "handle": "@ririririririiiii",
+    "name": "리리님❄️반동결",
+    "avatar": "🎵",
+    "bio": "2D 아이돌. 오시 유닛 이벤트 뛸 때만 말 많아짐",
+    "followers": 241,
+    "type": "gamer",
+    "postStyle": [
+      "라이브 3D 캡처",
+      "의상 뽑기",
+      "이벤트 랭킹 달리기"
+    ],
+    "id": "ririririririiiii",
+    "order": 66,
+    "hasVariables": false
+  },
+  {
+    "handle": "@loveme___",
+    "name": "주인공들 행복한 작품 잇으면 소개시켜주새요",
+    "avatar": "🌸",
+    "bio": "누구 하나 죽으면 바로 탈주함. 주인공들 행복하게 냅둬라 제발",
+    "followers": 35,
+    "type": "general",
+    "postStyle": [
+      "해피엔딩 기원",
+      "평화로운 IF썰",
+      "일상 AU 연성 알티"
+    ],
+    "id": "loveme___",
+    "order": 67,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{장르명변형아이디}",
+    "name": "우미(상태: 늦덕)",
+    "avatar": "🐣",
+    "bio": "어제 원작 정주행 끝냈습니다. 저랑 트친 해주실 분 ㅠㅠ",
+    "followers": 11,
+    "type": "general",
+    "postStyle": [
+      "충격의 캡처",
+      "원작 전개 질문",
+      "최애 선언"
+    ],
+    "id": "장르명변형아이디",
+    "order": 68,
+    "hasVariables": true,
+    "variableFields": [
+      "handle"
+    ]
+  },
+  {
+    "handle": "@ost_is_god",
+    "name": "브금오타쿠",
+    "avatar": "🎧",
+    "bio": "장르 브금/오프닝/엔딩 수집가. 음악 연출 좋은 애니 추천받아요",
+    "followers": 21,
+    "type": "reviewer",
+    "postStyle": [
+      "OST 플레이리스트",
+      "가사 해석",
+      "라이브 뷰잉 후기"
+    ],
+    "id": "ost_is_god",
+    "order": 69,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{캐릭터명}_kanojo",
+    "name": "{캐릭터명}의 아내",
+    "avatar": "💍",
+    "bio": "{캐릭터명} 드림 파요. 겹드림 직멘 X. 온리 드림 성향",
+    "followers": 7,
+    "type": "story_teller",
+    "postStyle": [
+      "드림 썰",
+      "드림 굿즈 제작",
+      "캐릭터와의 가상 일상"
+    ],
+    "id": "캐릭터명_kanojo",
+    "order": 70,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@otk_without_money",
+    "name": "거지새키",
+    "avatar": "👛",
+    "bio": "장르 굿즈 너무 비싸서 맨날 눈물만 흘리는 계정. 공구 탑승 실패자",
+    "followers": 28,
+    "type": "goods_collector",
+    "postStyle": [
+      "플미 한탄",
+      "재고 부족 오열",
+      "돈 모으기 다짐"
+    ],
+    "id": "otk_without_money",
+    "order": 71,
+    "hasVariables": false
+  },
+  {
+    "handle": "@delicious___fiv3star",
+    "name": "연성구독",
+    "avatar": "👀",
+    "bio": "연성러분들 항상 감사합니다. 멘션은 부끄러워서 마음만 남겨요",
+    "followers": 5,
+    "type": "general",
+    "postStyle": [
+      "존잘님 찬양(인용)",
+      "소심한 알티",
+      "북마크 정리"
+    ],
+    "id": "delicious___fiv3star",
+    "order": 72,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{캐릭터명영어로변형}akgae",
+    "name": "{캐릭터명} 피규어 도착 기원 정권 찌르기361일차",
+    "avatar": "📦",
+    "bio": "예약구매한 피규어 1년째 기다리는 중. 배송 지연 그만...",
+    "followers": 17,
+    "type": "goods_collector",
+    "postStyle": [
+      "예약 현황 확인",
+      "발매 연기 욕",
+      "전시 공간 고민"
+    ],
+    "id": "캐릭터명영어로변형akgae",
+    "order": 73,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name"
+    ]
+  },
+  {
+    "handle": "@N_tokki",
+    "name": "엔({행사명 줄임말} 토E14)",
+    "avatar": "🎪",
+    "bio": "1, 2차 굿즈 및 회지. 통판은 행사 후 남은 재고만 진행합니다.",
+    "followers": 1200,
+    "type": "booth_operator",
+    "postStyle": [
+      "부스 최종 인포",
+      "현장 세팅 완료",
+      "재고 소진 안내"
+    ],
+    "id": "n_tokki",
+    "order": 74,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@GangJJUI",
+    "name": "마감노예 강쮜",
+    "avatar": "🔥",
+    "bio": "살려주세요 마감 중입니다... 일스타페스 양일 참가 예정. 엽서/아크릴",
+    "followers": 850,
+    "type": "booth_operator",
+    "postStyle": [
+      "마감 한탄",
+      "굿즈 샘플샷",
+      "선입금 폼 오픈"
+    ],
+    "id": "gangjjui",
+    "order": 75,
+    "hasVariables": false
+  },
+  {
+    "handle": "@store_manager_B",
+    "name": "점장 @ {행사명} B2b",
+    "avatar": "📦",
+    "bio": "디페스타 준비중. 개그회지 위주. 굿즈는 소량만 들고갑니다.",
+    "followers": 340,
+    "type": "booth_operator",
+    "postStyle": [
+      "신간 인포",
+      "통판 배송 안내",
+      "부스 방문 감사 인사"
+    ],
+    "id": "store_manager_b",
+    "order": 76,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@paper_and_pen_",
+    "name": "종뱅기 ✈️ (통판중)",
+    "avatar": "📝",
+    "bio": "행사 참가 및 연성 백업계. 행사 당일엔 멘션 확인 느립니다.",
+    "followers": 2100,
+    "type": "booth_operator",
+    "postStyle": [
+      "부스 위치 타래",
+      "전종 완판 공지",
+      "행사 후기 및 정산"
+    ],
+    "id": "paper_and_pen_",
+    "order": 77,
+    "hasVariables": false
+  },
+  {
+    "handle": "@kairingring__",
+    "name": "카이링 ({행사명 줄임} 일F21)",
+    "avatar": "🛍️",
+    "bio": "투디 장르 잡덕. 굿즈 부스 냅니다. 선입금 수령은 오후 2시까지!",
+    "followers": 520,
+    "type": "booth_operator",
+    "postStyle": [
+      "부스 디스플레이 사진",
+      "잔여 수량 실시간 안내",
+      "파본 교환 공지"
+    ],
+    "id": "kairingring__",
+    "order": 78,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@ikiteyokata",
+    "name": "살아있음",
+    "avatar": "💤",
+    "bio": "밤새고 행사가는 사람. 수면부족. 부스에서 졸고 있어도 깨워주세요...",
+    "followers": 115,
+    "type": "booth_operator",
+    "postStyle": [
+      "철야 마감 인증",
+      "포장 지옥",
+      "조기 철수 안내"
+    ],
+    "id": "ikiteyokata",
+    "order": 79,
+    "hasVariables": false
+  },
+  {
+    "handle": "@acrylic_factory",
+    "name": "공장장",
+    "avatar": "🏭",
+    "bio": "아크릴 스탠드 깎는 노인. 행사마다 부스 냅니다. 겹지인 환영",
+    "followers": 4300,
+    "type": "booth_operator",
+    "postStyle": [
+      "굿즈 실물 타래",
+      "재판 문의 답변",
+      "다음 행사 참가 알림"
+    ],
+    "id": "acrylic_factory",
+    "order": 80,
+    "hasVariables": false
+  },
+  {
+    "handle": "@muyu_",
+    "name": "무유{행사명}양일 참가",
+    "avatar": "🐣",
+    "bio": "첫 부스 참가! 어버버해도 양해 부탁드립니다ㅠㅠ 1000원짜리 잔돈 환영!",
+    "followers": 85,
+    "type": "booth_operator",
+    "postStyle": [
+      "첫 부스 세팅",
+      "잔돈 교환 요청",
+      "과분한 사랑 감사"
+    ],
+    "id": "muyu_",
+    "order": 81,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@7777777777777",
+    "name": "칠(통판준비중)",
+    "avatar": "💖",
+    "bio": "우리 장르 굿즈가 없어서 제가 직접 만들었습니다. 온리전 부스 참가.",
+    "followers": 670,
+    "type": "booth_operator",
+    "postStyle": [
+      "행사 짐 싸기",
+      "부스 간식 인증",
+      "통판 수요조사"
+    ],
+    "id": "7777777777777",
+    "order": 82,
+    "hasVariables": false
+  },
+  {
+    "handle": "@ice_latte_",
+    "name": "아라떼",
+    "avatar": "🙏",
+    "bio": "재고를 남기지 않겠다는 강한 의지. 지류 굿즈/칼선 스티커 위주",
+    "followers": 290,
+    "type": "booth_operator",
+    "postStyle": [
+      "선입금 특전 공개",
+      "점심시간 부스 비움",
+      "무사히 귀가했습니다"
+    ],
+    "id": "ice_latte_",
+    "order": 83,
+    "hasVariables": false
+  },
+  {
+    "handle": "@photo_by_hook",
+    "name": "후크 PB",
+    "avatar": "📷",
+    "bio": "중부권 사진사. 소니 A7M4. 본업 바빠서 보정 느립니다. 사진 내려달라고 하시면 바로 내려요.",
+    "followers": 1500,
+    "type": "photographer",
+    "postStyle": [
+      "행사 갠촬 사진",
+      "코스어 본인 한정 저장 가능",
+      "보정 지옥 한탄"
+    ],
+    "id": "photo_by_hook",
+    "order": 84,
+    "hasVariables": false
+  },
+  {
+    "handle": "@lensclear",
+    "name": "클리어 씨",
+    "avatar": "🔍",
+    "bio": "{행사명} 출몰. 촬영 문의는 DM. 색감 쨍한 거 좋아합니다.",
+    "followers": 890,
+    "type": "photographer",
+    "postStyle": [
+      "오늘 행사 스냅",
+      "다음 행사 갠촬 모집",
+      "보정 전후 비교"
+    ],
+    "id": "lensclear",
+    "order": 85,
+    "hasVariables": true,
+    "variableFields": [
+      "bio"
+    ]
+  },
+  {
+    "handle": "@snap_cos_",
+    "name": "스냅(서코 양일)",
+    "avatar": "🎞️",
+    "bio": "코스프레 촬영 전문. 트윈/팀코 촬영 환영. 사진은 타래로 올립니다.",
+    "followers": 2300,
+    "type": "photographer",
+    "postStyle": [
+      "행사장 스케치",
+      "팀코 촬영본",
+      "코스어 칭찬"
+    ],
+    "id": "snap_cos_",
+    "order": 86,
+    "hasVariables": false
+  },
+  {
+    "handle": "@lightpb",
+    "name": "light (트친소 중)",
+    "avatar": "🌘",
+    "bio": "스튜디오 갠촬 위주. 다크/몽환적인 분위기 선호. 겹트친 우대.",
+    "followers": 1100,
+    "type": "photographer",
+    "postStyle": [
+      "스튜디오 촬영본",
+      "조명 세팅 공유",
+      "촬영 제안"
+    ],
+    "id": "lightpb",
+    "order": 87,
+    "hasVariables": false
+  },
+  {
+    "handle": "@urimuriyam",
+    "name": "{행사명} 출몰 예정 무리",
+    "avatar": "✨",
+    "bio": "취미로 사진 찍습니다. 행사장 무료 촬영. 인물 사진 보정 연습 중.",
+    "followers": 420,
+    "type": "photographer",
+    "postStyle": [
+      "행사장 무료 촬영본",
+      "트위터 아이디 찾습니다",
+      "카메라 기변 고민"
+    ],
+    "id": "urimuriyam",
+    "order": 88,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@cos_photog_A",
+    "name": "사진사 A",
+    "avatar": "📸",
+    "bio": "주말 행사 위주로 다닙니다. 캐논 유저. 촬영 제안은 언제든 환영!",
+    "followers": 670,
+    "type": "photographer",
+    "postStyle": [
+      "이번 행사 라인업",
+      "야외 촬영 결과물",
+      "다들 수고하셨습니다"
+    ],
+    "id": "cos_photog_a",
+    "order": 89,
+    "hasVariables": false
+  },
+  {
+    "handle": "@kkang_cos_photo",
+    "name": "깡",
+    "avatar": "🗂️",
+    "bio": "코스어분들의 멋진 순간을 담습니다. 무단 불펌 금지. DM 편하게 주세요.",
+    "followers": 3100,
+    "type": "photographer",
+    "postStyle": [
+      "팀코 프리뷰",
+      "갠촬 후기",
+      "보정본 타래"
+    ],
+    "id": "kkang_cos_photo",
+    "order": 90,
+    "hasVariables": false
+  },
+  {
+    "handle": "@lv1_newbie",
+    "name": "(배우는 중) 단추",
+    "avatar": "🔰",
+    "bio": "카메라 산 지 6개월. 코스프레 촬영 시작했습니다. 부족하지만 잘 부탁드려요!",
+    "followers": 150,
+    "type": "photographer",
+    "postStyle": [
+      "첫 행사 촬영",
+      "보정 팁 구함",
+      "새 렌즈 샀다"
+    ],
+    "id": "lv1_newbie",
+    "order": 91,
+    "hasVariables": false
+  },
+  {
+    "handle": "@studio_pb",
+    "name": "스튜 (예약X)",
+    "avatar": "🛋️",
+    "bio": "자연광 스튜디오 촬영 좋아함. 컨셉 촬영 문의 환영. 주말 풀스케줄",
+    "followers": 1800,
+    "type": "photographer",
+    "postStyle": [
+      "스튜디오 쉐어 구함",
+      "컨셉 촬영 결과물",
+      "밀린 보정 완료"
+    ],
+    "id": "studio_pb",
+    "order": 92,
+    "hasVariables": false
+  },
+  {
+    "handle": "@running_forever",
+    "name": "달림",
+    "avatar": "🏃",
+    "bio": "오프라인 행사 개근러. 지나가다 보이면 찔러주세요. 촬영본은 1주 내로 드림.",
+    "followers": 920,
+    "type": "photographer",
+    "postStyle": [
+      "서코 양일 달림",
+      "오늘 찍은 사진 타래",
+      "장비 무거워서 어깨 빠짐"
+    ],
+    "id": "running_forever",
+    "order": 93,
+    "hasVariables": false
+  },
+  {
+    "handle": "@{장르명 영어로}_info_kr",
+    "name": "{장르명} 정보/스포계",
+    "avatar": "📡",
+    "bio": "{장르명} 관련 공식 정보, 업데이트 내역, 스토리 스포일러를 정리합니다. 스포일러를 원치 않으시면 뮤트해주세요.",
+    "followers": 24500,
+    "type": "official_info",
+    "postStyle": [
+      "스토리 스포일러 타래",
+      "공식 업데이트 번역",
+      "이벤트 일정 달력"
+    ],
+    "id": "장르명_영어로_info_kr",
+    "order": 94,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@official_md_bot",
+    "name": "{장르명} 공식 굿즈 알리미",
+    "avatar": "🛍️",
+    "bio": "{장르명}의 공식 피규어, 콜라보 카페, 팝업스토어, 누이구루미 발매 소식을 가장 먼저 전해드립니다.",
+    "followers": 18200,
+    "type": "official_info",
+    "postStyle": [
+      "굿즈 발매일 안내",
+      "콜라보 카페 메뉴 공개",
+      "팝업 예약 링크 공유"
+    ],
+    "id": "official_md_bot",
+    "order": 95,
+    "hasVariables": true,
+    "variableFields": [
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@Happy_BDAY_cafe",
+    "name": "{캐릭터명} 생일카페 주최계",
+    "avatar": "🎂",
+    "bio": "202X.XX.XX {캐릭터명}의 생일 카페 <기적의 아이> 공식 계정입니다. 위치: 홍대. 현재 전시장 및 협력진 모집 중!",
+    "followers": 2100,
+    "type": "event_organizer",
+    "postStyle": [
+      "생일카페 협력진 모집",
+      "특전 디스플레이 공개",
+      "럭키드로우 경품 안내"
+    ],
+    "id": "happy_bday_cafe",
+    "order": 96,
+    "hasVariables": true,
+    "variableFields": [
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@only_event_kr",
+    "name": "{장르명} 배포전 : [{장르 행사명}]",
+    "avatar": "🎊",
+    "bio": "{장르명} 비공식 오프라인 동인 행사(배포전) 계정입니다. 부스 참가 신청 및 참관객 티켓팅 일정은 타래 확인 요망.",
+    "followers": 5400,
+    "type": "event_organizer",
+    "postStyle": [
+      "부스 배치도 공개",
+      "협력 코스어 라인업",
+      "전단지 배포처 안내"
+    ],
+    "id": "only_event_kr",
+    "order": 97,
+    "hasVariables": true,
+    "variableFields": [
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@cup_holder_prj",
+    "name": "{캐릭터명} 데뷔 N주년 컵홀더",
+    "avatar": "☕",
+    "bio": "{캐릭터명}의 N주년을 축하하기 위한 전국 4개 도시 컵홀더 이벤트 계정입니다. 해시태그 이벤트를 진행합니다.",
+    "followers": 1500,
+    "type": "event_organizer",
+    "postStyle": [
+      "지역별 카페 위치 안내",
+      "컵홀더 실물 샷",
+      "이벤트 해시태그 총공"
+    ],
+    "id": "cup_holder_prj",
+    "order": 98,
+    "hasVariables": true,
+    "variableFields": [
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@jp_trans_bot",
+    "name": "{장르명} 공지 번역계",
+    "avatar": "🌐",
+    "bio": "일본 공식 트위터 공지, 성우 인터뷰, 라이브 방송 등을 번역합니다. 의역/오역이 있을 수 있습니다. DM 제보 환영.",
+    "followers": 12800,
+    "type": "translator",
+    "postStyle": [
+      "일본 공식 트윗 번역",
+      "성우 코멘트 요약",
+      "잡지 인터뷰 전문 번역"
+    ],
+    "id": "jp_trans_bot",
+    "order": 99,
+    "hasVariables": true,
+    "variableFields": [
+      "name"
+    ]
+  },
+  {
+    "handle": "@jp_trend_now",
+    "name": "일본 트위터 실트 알리미",
+    "avatar": "📢",
+    "bio": "현재 일본 트위터에서 난리 난 {장르명} 관련 반응과 실시간 트렌드(실트)를 캡처하여 전달합니다.",
+    "followers": 8900,
+    "type": "translator",
+    "postStyle": [
+      "일본 실트 캡처",
+      "현지 팬 반응 번역",
+      "스토리 업데이트 직후 타임라인"
+    ],
+    "id": "jp_trend_now",
+    "order": 100,
+    "hasVariables": true,
+    "variableFields": [
+      "bio"
+    ]
+  },
+  {
+    "handle": "@l{캐릭터명 영어로}_said",
+    "name": "{캐릭터명} 대사/스토리 번역",
+    "avatar": "🗣️",
+    "bio": "일본 서버 선행 업데이트 기준 {캐릭터명}의 개인 스토리, 이벤트 스크립트를 번역하여 타래로 올립니다. 스포 주의.",
+    "followers": 6700,
+    "type": "translator",
+    "postStyle": [
+      "이벤트 스토리 번역 타래",
+      "홈 화면 터치 대사",
+      "전투 보이스 번역"
+    ],
+    "id": "l캐릭터명_영어로_said",
+    "order": 101,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@{장르명}_RT_bot",
+    "name": "{장르명} 연성 알티봇",
+    "avatar": "🔄",
+    "bio": "{장르명} 관련 팬아트, 썰, 회지 인포, 동인 굿즈 제작 등을 알티합니다. 프로필에 @genre_RT_bot 태그해주세요.",
+    "followers": 4500,
+    "type": "archiver",
+    "postStyle": [
+      "팬아트 리트윗",
+      "굿즈 통판 인포 리트윗",
+      "트친소 리트윗"
+    ],
+    "id": "장르명_rt_bot",
+    "order": 102,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@{cp 수 캐릭터명}_rightRT",
+    "name": "{cp 수 캐릭터명} 른 알티계",
+    "avatar": "🎨",
+    "bio": "{캐릭터명} 오른쪽(수) 위주의 연성을 알티합니다. 취향 타는 꾸금 연성이나 적폐 캐해도 RT되니 주의하세요.",
+    "followers": 3200,
+    "type": "archiver",
+    "postStyle": [
+      "CP 연성 리트윗",
+      "포스타입 링크 리트윗",
+      "썰 타래 리트윗"
+    ],
+    "id": "cp_수_캐릭터명_rightrt",
+    "order": 103,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@{cp 공 캐릭터명}isTopLeftGong",
+    "name": "최강왼 {캐릭터명}",
+    "avatar": "🎨",
+    "bio": "{캐릭터명} 왼(공) 위주의 연성을 알티합니다. 취향 타는 꾸금 연성이나 적폐 캐해도 RT되니 주의하세요.",
+    "followers": 3200,
+    "type": "archiver",
+    "postStyle": [
+      "CP 연성 리트윗",
+      "포스타입 링크 리트윗",
+      "썰 타래 리트윗"
+    ],
+    "id": "cp_공_캐릭터명istopleftgong",
+    "order": 104,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  },
+  {
+    "handle": "@60min_{장르명 영어로}",
+    "name": "{장르명} 전력 60분",
+    "avatar": "⏱️",
+    "bio": "매주 토요일 밤 10시~11시 진행되는 {장르명} 전력 60분 계정. 주제는 금요일 공개. 지각 제출도 RT합니다.",
+    "followers": 2800,
+    "type": "archiver",
+    "postStyle": [
+      "이번 주 전력 주제 공개",
+      "전력 참여작 폭풍 알티",
+      "참여자 감사 인사"
+    ],
+    "id": "60min_장르명_영어로",
+    "order": 105,
+    "hasVariables": true,
+    "variableFields": [
+      "handle",
+      "name",
+      "bio"
+    ]
+  }
+]
