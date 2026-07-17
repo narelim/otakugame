@@ -7,7 +7,9 @@ import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import StudioApp from "./StudioApp.jsx";
 import InternetApp from "./InternetApp.jsx";
 import BoothPlannerApp from "./BoothPlannerApp.jsx";
-import { DailyScreen, EventScreen, GalleryScreen, SNSScreen } from "./gameScreens.jsx";
+import PhoneOS from "./PhoneOS.jsx";
+import { unreadCount } from "../systems/messageSystem.js";
+import { DailyScreen, EventScreen, GalleryScreen } from "./gameScreens.jsx";
 
 const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 
@@ -39,7 +41,6 @@ function Stage({ children }) {
 
 const DESKTOP_APPS = [
   { id: "internet", icon: "🌐", name: "인터넷",      side: "left",  sub: "메이저랜드 · 굿즈컴퍼니" },
-  { id: "maitalk",  icon: "💬", name: "maitalk",     side: "left",  sub: "메신저" },
   { id: "studio",   icon: "🎨", name: "스튜디오",     side: "right", sub: "그림 그리기" },
   { id: "booth",    icon: "🏪", name: "부스 planner", side: "right", sub: "부스 꾸미기" },
   { id: "gallery",  icon: "🖼", name: "갤러리",       side: "right", sub: "작품 보관" },
@@ -69,6 +70,7 @@ function AppTile({ app, x, y, onOpen }) {
 }
 
 const TASKBAR_H = 64;
+const PHONE_W = 390, PHONE_H = 840;
 
 // 앱별 실제 화면 연결. 없으면 "준비중" 플레이스홀더.
 function appContent(id, state, setState) {
@@ -158,6 +160,7 @@ export default function DesktopShell({ state, setState }) {
   const upcoming = nearestUpcomingEvent(state);
   const dday = upcoming ? Math.max(0, upcoming.startDay - (state.day || 1)) : null;
   const eventDay = isEventDay(state);
+  const unread = unreadCount(state);
 
   return (
     <Stage>
@@ -202,7 +205,9 @@ export default function DesktopShell({ state, setState }) {
         {/* 우: 배경변경 · 핸드폰 · 시계 */}
         <button onClick={() => fileRef.current && fileRef.current.click()} title="바탕화면 변경" style={{ width: 40, height: 40, borderRadius: 10, background: "transparent", border: "1px solid #2a2a4a", color: "#9a8fc0", fontSize: 16, cursor: "pointer", flexShrink: 0 }}>🖼</button>
         {wallpaper && <button onClick={resetWallpaper} title="기본 배경" style={{ height: 30, padding: "0 10px", borderRadius: 8, background: "transparent", border: "1px solid #2a2a4a", color: "#555", fontSize: 11, cursor: "pointer", flexShrink: 0 }}>기본값</button>}
-        <button onClick={() => setPhoneOpen(v => !v)} title="핸드폰 (SNS)" style={{ width: 44, height: 44, borderRadius: 12, background: "linear-gradient(145deg,#7c3aed,#e94560)", border: "none", color: "#fff", fontSize: 22, cursor: "pointer", flexShrink: 0, boxShadow: "0 4px 14px rgba(124,58,237,0.5)" }}>📱</button>
+        <button onClick={() => setPhoneOpen(v => !v)} title="핸드폰" style={{ position: "relative", width: 44, height: 44, borderRadius: 12, background: "linear-gradient(145deg,#7c3aed,#e94560)", border: "none", color: "#fff", fontSize: 22, cursor: "pointer", flexShrink: 0, boxShadow: "0 4px 14px rgba(124,58,237,0.5)" }}>📱
+          {unread > 0 && <span style={{ position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, background: "#e94560", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px", border: "2px solid #08081a" }}>{unread > 99 ? "99+" : unread}</span>}
+        </button>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", color: "#c7c0e0", flexShrink: 0, minWidth: 110 }}>
           <span style={{ fontSize: 15, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{hhmm}</span>
           <span style={{ fontSize: 11, color: "#666" }}>{dateLabel}</span>
@@ -220,15 +225,9 @@ export default function DesktopShell({ state, setState }) {
         <div style={{ position: "absolute", right: 16, bottom: 6, fontSize: 10, color: "#444" }}>Tab 으로 열고 닫기</div>
       </div>
 
-      {/* 핸드폰 오버레이 (SNS) — 우측에서 슬라이드 */}
-      <div style={{ position: "absolute", right: phoneOpen ? 40 : -420, top: 80, width: 360, height: STAGE_H - 200, background: "rgba(10,10,24,0.96)", border: "1.5px solid #2a2a4a", borderRadius: 32, transition: "right .3s cubic-bezier(.4,1.1,.5,1)", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", zIndex: 55, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-        <div style={{ height: 54, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 18px", borderBottom: "1px solid #2a2a4a" }}>
-          <span style={{ fontSize: 15, fontWeight: 800, color: "#4cc9f0" }}>🐦 SNS</span>
-          <button onClick={() => setPhoneOpen(false)} style={{ background: "transparent", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>✕</button>
-        </div>
-        <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-          {phoneOpen && <ErrorBoundary><SNSScreen state={state} setState={setState} onOpenProfile={() => { }} /></ErrorBoundary>}
-        </div>
+      {/* 핸드폰 — 아래에서 올라오고, 집어넣으면 내려간다 */}
+      <div style={{ position: "absolute", right: 56, bottom: phoneOpen ? TASKBAR_H + 14 : -(PHONE_H + 80), width: PHONE_W, height: PHONE_H, transition: "bottom .35s cubic-bezier(.4,1.15,.5,1)", zIndex: 55 }}>
+        <PhoneOS state={state} setState={setState} onClose={() => setPhoneOpen(false)} />
       </div>
 
       {/* 전원 메뉴 */}

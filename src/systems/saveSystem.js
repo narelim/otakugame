@@ -3,7 +3,7 @@
 // - 그림 세이브(seoko_draw_saves)·NPC 로스터·이미지풀/북마크는 기존 저장소를 그대로 사용(여기서 안 건드림).
 const DB = "seokoSave", VER = 1, STORE = "slots";
 export const MAIN_SLOT = "main";
-export const SAVE_VERSION = 1; // state 구조가 바뀌면 올리고 migrate()에 단계 추가
+export const SAVE_VERSION = 2; // state 구조가 바뀌면 올리고 migrate()에 단계 추가
 
 let _p = null;
 function db() {
@@ -55,7 +55,7 @@ export function clearSave(slot = MAIN_SLOT) {
 
 // 구버전 저장본 → 최신 구조 보정. 구조 변경 시 단계별로 누적 적용.
 function migrate(rec) {
-  const state = rec.state;
-  // if (rec.version < 2) { ...필드 추가/이름 변경 보정... }
+  let state = rec.state;
+  if ((rec.version || 1) < 2) state = { job: null, transactions: [], messages: [], ...state }; // v2: 알바·은행·메시지
   return { state, version: rec.version, savedAt: rec.savedAt };
 }

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { BOOTH_ITEMS, SAVE_KEY } from "../data/gameData.js";
+import { logTx } from "../systems/bankSystem.js";
 
 /* ============================================================
    부스 플래너 (데스크톱 창 내부) — 이케아 가상배치 참고
@@ -93,7 +94,7 @@ export default function BoothPlannerApp({ state, setState }) {
     saveLayout();
     // 실제 게임 상태에 반영: 골드 차감(추가구매만) + 산 물건을 보유 목록에 편입 + 레이아웃 저장
     if (setState) {
-      setState(s => ({ ...s, gold: (s.gold || 0) - total, boothItems: [...new Set([...(s.boothItems || []), ...placedItemIds])], boothLayout: placed }));
+      setState(s => { const ns = total > 0 ? logTx(s, -total, "부스 아이템 구매", "🏪") : s; return { ...ns, boothItems: [...new Set([...(ns.boothItems || []), ...placedItemIds])], boothLayout: placed }; });
     }
     setToast(total > 0 ? `✦ 구매 및 저장 완료! (추가구매 ${KRW(total)})` : "✦ 저장 완료! (추가구매 없음)");
     setView("edit");
