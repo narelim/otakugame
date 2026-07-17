@@ -30,7 +30,7 @@ export function TitleScreen({onStart,onContinue,saveMeta}){
       {hasSave
         ?<div style={{marginTop:"20px",fontSize:"11px",color:"#555",animation:"fup 1.3s ease"}}>저장됨 · {savedDay}일차{savedLabel?` · ${savedLabel}`:""}</div>
         :<div style={{marginTop:"20px",fontSize:"11px",color:"#333",animation:"fup 1.3s ease"}}>초기 자금 ₩50,000 · 서코 D-30</div>}
-      <button onClick={()=>{window.location.hash="#desktop";}} style={{marginTop:"18px",background:"transparent",border:"1px dashed #333",color:"#555",fontSize:"11px",padding:"6px 14px",borderRadius:"8px",cursor:"pointer",animation:"fup 1.4s ease"}}>🖥 가로 데스크톱 미리보기 (개발중)</button>
+      <button onClick={()=>{window.location.hash=window.location.hash==="#mobile"?"":"#mobile";}} style={{marginTop:"18px",background:"transparent",border:"1px dashed #333",color:"#555",fontSize:"11px",padding:"6px 14px",borderRadius:"8px",cursor:"pointer",animation:"fup 1.4s ease"}}>{window.location.hash==="#mobile"?"🖥 가로 데스크톱 모드로":"📱 세로 모바일 모드 (레거시)"}</button>
     </div>
   </div>);
 }

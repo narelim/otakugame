@@ -3,6 +3,7 @@ import { putBlob, getBlob, delBlob } from "../systems/assetStore.js";
 import { nearestUpcomingEvent, isEventDay } from "../systems/eventSystem.js";
 import { resolveChoice, applyEventDelta } from "../systems/snsEventSystem.js";
 import EventModal from "../components/EventModal.jsx";
+import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import StudioApp from "./StudioApp.jsx";
 import InternetApp from "./InternetApp.jsx";
 import BoothPlannerApp from "./BoothPlannerApp.jsx";
@@ -11,9 +12,9 @@ import { DailyScreen, EventScreen, GalleryScreen, SNSScreen } from "./gameScreen
 const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 
 /* ============================================================
-   가로(1920×1080) 데스크톱 셸 — "게임 화면 = 내 컴퓨터" 컨셉 스캐폴드
-   기존 세로/탭 게임과 분리된 독립 화면. #desktop 라우트로 미리보기.
-   실제 게임 로직(스튜디오/부스/SNS 등)은 이후 창(window) 안에 하나씩 연결.
+   가로(1920×1080) 데스크톱 셸 — "게임 화면 = 내 컴퓨터" 컨셉. 기본 진입 화면.
+   세로/탭 게임은 #mobile 라우트의 레거시로 남아 같은 state를 공유.
+   앱 타일 → 전체화면 창으로 게임 로직 연결 (maitalk은 준비중 플레이스홀더).
    ============================================================ */
 
 const STAGE_W = 1920, STAGE_H = 1080;
@@ -90,13 +91,15 @@ function AppWindow({ app, onClose, state, setState }) {
         <button onClick={onClose} title="닫기 (Esc)" style={{ width: 34, height: 34, borderRadius: 8, background: "transparent", border: "none", color: "#e94560", fontSize: 20, cursor: "pointer", fontWeight: 700 }}>✕</button>
       </div>
       <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-        {content || (
-          <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: "#555" }}>
-            <span style={{ fontSize: 72, opacity: 0.5 }}>{app.icon}</span>
-            <span style={{ fontSize: 17, color: "#7a7a9a" }}>{app.name} — 준비중</span>
-            <span style={{ fontSize: 12, color: "#444" }}>여기에 실제 화면이 전체화면으로 연결됩니다</span>
-          </div>
-        )}
+        <ErrorBoundary key={app.id}>
+          {content || (
+            <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, color: "#555" }}>
+              <span style={{ fontSize: 72, opacity: 0.5 }}>{app.icon}</span>
+              <span style={{ fontSize: 17, color: "#7a7a9a" }}>{app.name} — 준비중</span>
+              <span style={{ fontSize: 12, color: "#444" }}>여기에 실제 화면이 전체화면으로 연결됩니다</span>
+            </div>
+          )}
+        </ErrorBoundary>
       </div>
     </div>
   );
@@ -224,7 +227,7 @@ export default function DesktopShell({ state, setState }) {
           <button onClick={() => setPhoneOpen(false)} style={{ background: "transparent", border: "none", color: "#666", fontSize: 18, cursor: "pointer" }}>✕</button>
         </div>
         <div style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-          {phoneOpen && <SNSScreen state={state} setState={setState} onOpenProfile={() => { }} />}
+          {phoneOpen && <ErrorBoundary><SNSScreen state={state} setState={setState} onOpenProfile={() => { }} /></ErrorBoundary>}
         </div>
       </div>
 
@@ -253,9 +256,11 @@ export default function DesktopShell({ state, setState }) {
           </div>
           <div style={{ flex: 1, minHeight: 0, display: "flex", justifyContent: "center", overflow: "hidden" }}>
             <div style={{ width: "100%", maxWidth: powerMode === "event" ? 680 : 480, height: "100%" }}>
-              {powerMode === "daily"
-                ? <DailyScreen state={state} setState={setState} />
-                : <EventScreen state={state} setState={setState} onBack={() => setPowerMode(null)} />}
+              <ErrorBoundary key={powerMode}>
+                {powerMode === "daily"
+                  ? <DailyScreen state={state} setState={setState} />
+                  : <EventScreen state={state} setState={setState} onBack={() => setPowerMode(null)} />}
+              </ErrorBoundary>
             </div>
           </div>
         </div>
@@ -265,9 +270,6 @@ export default function DesktopShell({ state, setState }) {
       {state.pendingSnsEvent && <EventModal data={state.pendingSnsEvent}
         onChoice={(idx) => setState(s => { const pe = s.pendingSnsEvent; if (!pe) return s; const r = resolveChoice(pe.event, idx); let ns = applyEventDelta(s, r.delta); return { ...ns, pendingSnsEvent: { event: pe.event, result: r.delta, needsChoice: false, chosen: true }, flags: { ...ns.flags, wantNewGenre: r.createGenreTrigger || ns.flags.wantNewGenre } }; })}
         onClose={() => setState(s => ({ ...s, pendingSnsEvent: null }))} />}
-
-      {/* 개발중 배지 */}
-      <div style={{ position: "absolute", left: 48, top: 40, fontSize: 12, color: "#555", letterSpacing: 2 }}>🖥 가로 데스크톱 (개발중 · #desktop)</div>
     </Stage>
   );
 }
