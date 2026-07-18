@@ -3,7 +3,7 @@
 // - 그림 세이브(seoko_draw_saves)·NPC 로스터·이미지풀/북마크는 기존 저장소를 그대로 사용(여기서 안 건드림).
 const DB = "seokoSave", VER = 1, STORE = "slots";
 export const MAIN_SLOT = "main";
-export const SAVE_VERSION = 6; // state 구조가 바뀌면 올리고 migrate()에 단계 추가
+export const SAVE_VERSION = 7; // state 구조가 바뀌면 올리고 migrate()에 단계 추가
 
 let _p = null;
 function db() {
@@ -61,5 +61,6 @@ function migrate(rec) {
   if ((rec.version || 1) < 4) state = { stats: { spend: {}, earn: {} }, ...state };             // v4: 성향 통계
   if ((rec.version || 1) < 5) state = { collection: [], collectionSets: [], ...state };         // v5: 덕질장(공식 굿즈 수집)
   if ((rec.version || 1) < 6) state = { avatar: { skin: "s1", hair: "bob", hairColor: "#6b4a35", outfit: "hoodie", acc: null }, wardrobe: ["hoodie"], ...state }; // v6: 아바타·옷장
+  if ((rec.version || 1) < 7) state = { archive: [], ...state };                                // v7: 장르 엔딩(기록 보관소)
   return { state, version: rec.version, savedAt: rec.savedAt };
 }

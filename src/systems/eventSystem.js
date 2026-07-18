@@ -47,6 +47,13 @@ export function advanceDay(s){
   const notice=dDayNotice(ns);
   if(lineup){const delta={followers:5+Math.floor(Math.random()*16),fame:3,mental:10};ns=applyEventDelta(ns,delta);ns={...ns,pendingSnsEvent:{event:{id:"lineup_announced",name:"라인업 공개",icon:"📣",presentation:"banner",message:`${lineup.name} 라인업이 공개됐다. 탐라에 설레는 분위기가 흐른다.`},result:delta,needsChoice:false}};}
   else if(notice){ns={...ns,pendingSnsEvent:{event:{id:"dday_notice",name:notice.dday===0?"행사 당일":`D-${notice.dday}`,icon:notice.dday===0?"🎪":"📅",presentation:notice.dday<=1?"modal":"banner",message:notice.msg},result:{},needsChoice:false}};}
+  else if((ns.archive||[]).length&&Math.random()<0.05){
+    // 탈덕한 옛 장르의 소식이 간간히 흘러들어온다 (아련함 = 멘탈 +5)
+    const mem=ns.archive[Math.floor(Math.random()*ns.archive.length)];
+    const texts=[`타임라인에 ${mem.genreName} 공식 소식이 흘러들어왔다. 아련하다...`,`${mem.genreName} 2차 창작이 리트윗으로 돌아왔다. 그땐 그랬지...`,`누군가 ${mem.genreName} 굿즈 나눔을 하고 있다. 잠깐 멈칫했다.`,`${mem.genreName} 신규 팬이 유입되고 있다는 소문. 좋은 곳이었지, 거기.`];
+    const delta={mental:5};ns=applyEventDelta(ns,delta);
+    ns={...ns,pendingSnsEvent:{event:{id:"old_genre_news",name:"옛 장르의 소식",icon:"🍂",presentation:"banner",message:texts[Math.floor(Math.random()*texts.length)]},result:delta,needsChoice:false}};
+  }
   else{const ev=processDailyEvents(ns);if(ev){if(ev.needsChoice){ns={...ns,pendingSnsEvent:{event:ev.event,needsChoice:true},lastEventId:ev.event.id};}else{ns=applyEventDelta(ns,ev.delta);ns={...ns,pendingSnsEvent:{event:ev.event,result:ev.delta,needsChoice:false},lastEventId:ev.event.id};}}}
   return ns;
 }

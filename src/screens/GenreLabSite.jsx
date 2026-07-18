@@ -3,6 +3,7 @@ import { CP_TYPES, MEDIA_LIST, MEDIA_GENRES, APPEARANCE_TAGS, PERSONALITY_TAGS, 
 import { switchActiveGenre, canAddGenre, generateGenreName, legacyFields } from "../systems/genreSystem.js";
 import { generateEventSchedule } from "../systems/eventSystem.js";
 import { buildNpcRoster, saveRoster } from "../systems/tweetSystem.js";
+import { CLOSE_REASONS, hiatusGenre, resumeGenre, closeGenre, refandomBonus, applyRefandom } from "../systems/endingSystem.js";
 
 /* ============================================================
    장르연구소 GenreLab — 인터넷 브라우저 속 "덕질 장르 정의 서비스" 사이트
@@ -24,6 +25,8 @@ export default function GenreLabSite({state,setState}){
   const [step,setStep]=useState(1);
   const [draft,setDraft]=useState(()=>(g&&g.characters)?{...g}:freshDraft());
   const [eChar,setEChar]=useState(null);
+  const [ending,setEnding]=useState(null);      // null | "hiatus" | "close" — 계정 정리 모달
+  const [reasonSel,setReasonSel]=useState(null); // 탈덕 사유
 
   const upd=(patch)=>setDraft(d=>({...d,...patch}));
   const tArr=(arr,v,max)=>arr.includes(v)?arr.filter(x=>x!==v):(arr.length<max?[...arr,v]:arr);
@@ -63,7 +66,11 @@ export default function GenreLabSite({state,setState}){
       ng.eventSchedule=generateEventSchedule(ng,s.day);
       genres=[...genres,ng];
       const cost=first?{}:{stamina:Math.max(0,(s.stamina||0)-20),mentalHealth:Math.max(0,(s.mentalHealth||0)-10)};
-      return {...s,genres,activeGenreId:id,genre:ng,npcRoster:assigned,fame:0,followers:0,fanTrust:50,engagement:50,snsHistory:[],...cost};
+      let out={...s,genres,activeGenreId:id,genre:ng,npcRoster:assigned,fame:0,followers:0,fanTrust:50,engagement:50,snsHistory:[],...cost};
+      // 복덕(재파기): 탈덕했던 장르를 다시 파면 옛 팬이 알아본다
+      const rb=refandomBonus(out,finalName);
+      if(rb)out=applyRefandom(out,rb);
+      return out;
     });
     setEditing(false);setStep(1);
   };
@@ -73,6 +80,63 @@ export default function GenreLabSite({state,setState}){
   const siteHeader=(<div style={{textAlign:"center",padding:"26px 0 18px"}}>
     <div style={{display:"inline-flex",alignItems:"center",gap:10,padding:"12px 34px",background:"linear-gradient(135deg,#7c3aed,#a855f7)",borderRadius:16,color:"#fff",fontWeight:900,fontSize:26,letterSpacing:1,boxShadow:"0 6px 20px rgba(124,58,237,0.35)"}}>🧪 장르연구소</div>
     <div style={{fontSize:13,color:T.mut,marginTop:9}}>GenreLab — 내가 파는 장르를 정의하는 실험실</div>
+  </div>);
+
+  // ── 휴덕 중 목록 + 기록 보관소 (카드 뷰/위저드 하단 공용) ──
+  const hiatusList=(state.genres||[]).filter(x=>x.status==="hiatus");
+  const archive=state.archive||[];
+  const archiveSection=(<>
+    {hiatusList.length>0&&<div style={{marginTop:18}}>
+      <div style={{fontSize:15,fontWeight:800,color:T.text,marginBottom:10}}>😴 휴덕 중 <span style={{color:T.dim,fontSize:12}}>({hiatusList.length})</span></div>
+      {hiatusList.map(hg=>(<div key={hg.id} style={{...card,padding:"14px 18px",marginBottom:8,display:"flex",alignItems:"center",gap:12}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:800,color:T.text}}>{hg.name}</div>
+          <div style={{fontSize:11,color:T.mut,marginTop:2}}>Day {hg.hiatusDay}부터 휴덕 · 팔로워 {(hg.followers||0).toLocaleString()} 보존 중</div>
+        </div>
+        <button onClick={()=>setState(s=>resumeGenre(s,hg.id))} style={{padding:"9px 20px",borderRadius:10,border:"none",background:"linear-gradient(135deg,#7c3aed,#a855f7)",color:"#fff",fontWeight:800,fontSize:13,cursor:"pointer"}}>복귀하기</button>
+      </div>))}
+      <div style={{fontSize:11,color:T.dim,marginTop:4}}>복귀 시 팔로워 70% · 인지도 80%만 남아요 (팬들도 기다리다 지쳐요)</div>
+    </div>}
+    {archive.length>0&&<div style={{marginTop:18}}>
+      <div style={{fontSize:15,fontWeight:800,color:T.text,marginBottom:10}}>🗄 기록 보관소 <span style={{color:T.pri}}>({archive.length})</span> <span style={{fontSize:11,color:T.dim,fontWeight:400}}>— 끝난 덕질은 사라지지 않고 여기 남는다</span></div>
+      {[...archive].reverse().map(m=>(<div key={m.id} style={{...card,padding:18,marginBottom:10,background:"linear-gradient(135deg,#fff,#faf6ef)"}}>
+        <div style={{display:"flex",alignItems:"baseline",gap:8,flexWrap:"wrap"}}>
+          <span style={{fontSize:16,fontWeight:900,color:"#6a5a3e"}}>{m.genreName}</span>
+          <span style={{fontSize:11,color:T.dim}}>{m.media}</span>
+          <span style={{marginLeft:"auto",fontSize:12,color:T.mut,fontWeight:700}}>{m.reasonIcon} {m.reasonLabel}</span>
+        </div>
+        <div style={{fontSize:12,color:T.mut,marginTop:6,lineHeight:1.7}}>Day {m.createdDay} ~ {m.closedDay} · <b>{m.days}일의 덕질</b> · 행사 {m.events}회 · 총 판매 ₩{(m.totalSales||0).toLocaleString()} · 팔로워 {(m.followers||0).toLocaleString()} · 인지도 {m.fame}pt{m.refandomCount?<span style={{color:T.acc}}> · 🔁 복덕 {m.refandomCount}회</span>:null}</div>
+        {m.highlights&&m.highlights.length>0&&<div style={{marginTop:10,borderTop:`1px dashed ${T.bd}`,paddingTop:9}}>
+          <div style={{fontSize:10,color:T.dim,marginBottom:4}}>그때의 타임라인</div>
+          {m.highlights.map((h,i)=><div key={i} style={{fontSize:12,color:"#7a6a52",lineHeight:1.8}}>💬 "{h.text}" <span style={{color:T.dim,fontSize:10}}>— {h.from} · ♥{h.likes}</span></div>)}
+        </div>}
+      </div>))}
+      <div style={{fontSize:11,color:T.dim}}>💡 같은 이름의 장르를 다시 만들면(복덕) 옛 팬 일부가 알아봐요.</div>
+    </div>}
+  </>);
+
+  // ── 계정 정리 모달 ──
+  const endingModal=ending&&g&&(<div onClick={()=>{setEnding(null);setReasonSel(null);}} style={{position:"fixed",inset:0,zIndex:90,background:"rgba(30,20,60,0.45)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+    <div onClick={e=>e.stopPropagation()} style={{width:440,background:"#fff",borderRadius:20,padding:26,boxShadow:"0 20px 60px rgba(30,20,60,0.35)"}}>
+      {ending==="hiatus"?(<>
+        <div style={{fontSize:18,fontWeight:900,color:T.text,marginBottom:8}}>😴 {g.name} — 휴덕할까요?</div>
+        <div style={{fontSize:13,color:T.mut,lineHeight:1.9,marginBottom:18}}>계정은 그대로 두고 활동만 쉽니다.<br/>언제든 복귀할 수 있지만, 쉬는 동안 <b>팔로워 30%·인지도 20%가 떠나요.</b></div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>setEnding(null)} style={{flex:1,padding:12,borderRadius:11,border:`1px solid ${T.bd}`,background:"#fff",color:T.mut,fontWeight:700,cursor:"pointer"}}>취소</button>
+          <button onClick={()=>{setState(s=>hiatusGenre(s,g.id));setEnding(null);}} style={{flex:2,padding:12,borderRadius:11,border:"none",background:"linear-gradient(135deg,#7c3aed,#a855f7)",color:"#fff",fontWeight:800,cursor:"pointer"}}>😴 휴덕한다</button>
+        </div>
+      </>):(<>
+        <div style={{fontSize:18,fontWeight:900,color:T.text,marginBottom:6}}>🍂 {g.name} — 계정을 정리할까요?</div>
+        <div style={{fontSize:13,color:T.mut,lineHeight:1.8,marginBottom:14}}>{g.name}에서의 시간이 <b>회고록으로 보관소에 영구히 남고</b>, 계정은 닫힙니다.<br/>사유를 골라주세요 — 회고록에 함께 기록돼요.</div>
+        <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:16}}>
+          {CLOSE_REASONS.map(r=>(<button key={r.id} onClick={()=>setReasonSel(r.id)} style={{padding:"11px 14px",borderRadius:11,textAlign:"left",border:`1.5px solid ${reasonSel===r.id?T.pri:T.bd}`,background:reasonSel===r.id?purple.bg:"#fff",color:reasonSel===r.id?T.pri:T.mut,fontSize:13,fontWeight:700,cursor:"pointer"}}>{r.icon} {r.label}</button>))}
+        </div>
+        <div style={{display:"flex",gap:10}}>
+          <button onClick={()=>{setEnding(null);setReasonSel(null);}} style={{flex:1,padding:12,borderRadius:11,border:`1px solid ${T.bd}`,background:"#fff",color:T.mut,fontWeight:700,cursor:"pointer"}}>더 팔래요</button>
+          <button disabled={!reasonSel} onClick={()=>{setState(s=>closeGenre(s,g.id,reasonSel));setEnding(null);setReasonSel(null);}} style={{flex:2,padding:12,borderRadius:11,border:"none",background:reasonSel?"linear-gradient(135deg,#b98756,#8a6a3e)":"#eee6f8",color:reasonSel?"#fff":T.dim,fontWeight:800,cursor:reasonSel?"pointer":"not-allowed"}}>🍂 계정 정리 (탈덕)</button>
+        </div>
+      </>)}
+    </div>
   </div>);
 
   // ── 카드 뷰 (나의 장르) ──
@@ -86,8 +150,8 @@ export default function GenreLabSite({state,setState}){
           <button onClick={()=>{if(canAddGenre(state))startEdit("new");}} disabled={!canAddGenre(state)} title={!canAddGenre(state)?"최대 5개 / 체력30·멘탈40 필요":""} style={{padding:"8px 18px",background:canAddGenre(state)?"linear-gradient(135deg,#7c3aed,#e94560)":"#eee6f8",border:"none",color:canAddGenre(state)?"#fff":T.dim,borderRadius:9,cursor:canAddGenre(state)?"pointer":"not-allowed",fontSize:13,fontWeight:700}}>＋ 새 장르</button>
         </div>
       </div>
-      {(state.genres||[]).length>1&&<div style={{display:"flex",gap:8,overflowX:"auto",marginBottom:14,paddingBottom:2}}>
-        {(state.genres||[]).map(gg=><button key={gg.id} onClick={()=>setState(s=>switchActiveGenre(s,gg.id))} style={{flexShrink:0,padding:"7px 15px",background:gg.id===state.activeGenreId?purple.bg:"#fff",border:`1px solid ${gg.id===state.activeGenreId?purple.bd:T.bd}`,color:gg.id===state.activeGenreId?T.pri:T.mut,borderRadius:18,cursor:"pointer",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{gg.name} <span style={{fontSize:10,color:T.dim}}>·{(gg.id===state.activeGenreId?state.followers:gg.followers||0)}</span></button>)}
+      {(state.genres||[]).filter(x=>x.status!=="hiatus").length>1&&<div style={{display:"flex",gap:8,overflowX:"auto",marginBottom:14,paddingBottom:2}}>
+        {(state.genres||[]).filter(x=>x.status!=="hiatus").map(gg=><button key={gg.id} onClick={()=>setState(s=>switchActiveGenre(s,gg.id))} style={{flexShrink:0,padding:"7px 15px",background:gg.id===state.activeGenreId?purple.bg:"#fff",border:`1px solid ${gg.id===state.activeGenreId?purple.bd:T.bd}`,color:gg.id===state.activeGenreId?T.pri:T.mut,borderRadius:18,cursor:"pointer",fontSize:13,fontWeight:700,whiteSpace:"nowrap"}}>{gg.name} <span style={{fontSize:10,color:T.dim}}>·{(gg.id===state.activeGenreId?state.followers:gg.followers||0)}</span></button>)}
       </div>}
       {!canAddGenre(state)&&(state.genres||[]).length<5&&<div style={{fontSize:12,color:T.dim,marginBottom:12}}>💤 새 장르를 추가하려면 체력 30·멘탈 40 이상이 필요해요 (추가 시 체력 -20·멘탈 -10)</div>}
       <div style={{...card,background:"linear-gradient(135deg,#fff,#f6efff)",padding:26,marginBottom:16,position:"relative",overflow:"hidden"}}>
@@ -99,10 +163,17 @@ export default function GenreLabSite({state,setState}){
         <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:12}}>{(g.tags||[]).map(t=><span key={t} style={{fontSize:12,padding:"4px 12px",background:blue.bg,border:`1px solid ${blue.bd}`,borderRadius:20,color:blue.fg}}>#{t}</span>)}</div>
         {g.nickname&&<div style={{fontSize:12,color:"#b98700",marginBottom:6}}>💕 애칭: {g.nickname}</div>}
         {g.desc&&<div style={{fontSize:13,color:"#5c5478",lineHeight:1.8,borderTop:`1px solid ${T.bd}`,paddingTop:12}}>{g.desc}</div>}
+        <div style={{display:"flex",gap:8,marginTop:14,borderTop:`1px dashed ${T.bd}`,paddingTop:12}}>
+          <span style={{fontSize:11,color:T.dim,alignSelf:"center",marginRight:"auto"}}>이 장르, 계속 팔까...?</span>
+          <button onClick={()=>setEnding("hiatus")} style={{padding:"8px 16px",borderRadius:9,border:`1px solid ${T.bd}`,background:"#fff",color:T.mut,fontSize:12,fontWeight:700,cursor:"pointer"}}>😴 휴덕</button>
+          <button onClick={()=>setEnding("close")} style={{padding:"8px 16px",borderRadius:9,border:"1px solid #d9c5a8",background:"#faf6ef",color:"#8a6a3e",fontSize:12,fontWeight:700,cursor:"pointer"}}>🍂 계정 정리 (탈덕)</button>
+        </div>
       </div>
       {(g.characters&&g.characters.length>0)&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>{g.characters.map(c=><div key={c.id} style={{...card,padding:"12px 15px"}}><div style={{fontSize:14,fontWeight:700,color:T.text}}>{c.name} {c.popularity&&<span style={{fontSize:11,color:T.mut,fontWeight:400}}>· {c.popularity}</span>}</div><div style={{fontSize:11,color:T.dim,marginTop:4,lineHeight:1.6}}>{[...(c.appearanceTags||[]),...(c.personalityTags||[]),...(c.conceptTags||[])].join(" · ")||"태그 미설정"}</div></div>)}</div>}
       <div style={{...card,padding:"13px 16px",fontSize:13,color:T.mut,lineHeight:1.8}}>💡 장르 정보가 mabo NPC 반응·계정 선택·굿즈 반응에 반영됩니다.</div>
+      {archiveSection}
     </div>
+    {endingModal}
   </div>);
 
   // ── 위저드 ──
@@ -193,6 +264,7 @@ export default function GenreLabSite({state,setState}){
           </div>
           :navBar(canNext,nextLabel)}
       </div>
+      {archiveSection}
     </div>
   </div>);
 }

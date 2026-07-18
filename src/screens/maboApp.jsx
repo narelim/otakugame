@@ -162,7 +162,7 @@ export default function MaboApp({state,setState,view,push}){
     </button>
     {multiG&&<div style={{display:"flex",gap:"6px",overflowX:"auto",padding:"8px 12px",background:"#0d1626",borderBottom:"1px solid #14202f",flexShrink:0}}>
       <button onClick={()=>setFeedTab("all")} style={{flexShrink:0,padding:"4px 12px",background:feedTab==="all"?"#0f2438":"transparent",border:`1px solid ${feedTab==="all"?AC:"#1c2c44"}`,color:feedTab==="all"?AC:"#6b7f9e",borderRadius:"15px",cursor:"pointer",fontSize:"11px",fontWeight:"700",whiteSpace:"nowrap"}}>🌐 전체</button>
-      {genresArr.map(gg=><button key={gg.id} onClick={()=>{setState(s=>switchActiveGenre(s,gg.id));setFeedTab(gg.id);}} style={{flexShrink:0,padding:"4px 12px",background:feedTab===gg.id?"#0f2438":"transparent",border:`1px solid ${feedTab===gg.id?AC:"#1c2c44"}`,color:feedTab===gg.id?AC:"#6b7f9e",borderRadius:"15px",cursor:"pointer",fontSize:"11px",fontWeight:"700",whiteSpace:"nowrap"}}>{gg.name}</button>)}
+      {genresArr.filter(gg=>gg.status!=="hiatus").map(gg=><button key={gg.id} onClick={()=>{setState(s=>switchActiveGenre(s,gg.id));setFeedTab(gg.id);}} style={{flexShrink:0,padding:"4px 12px",background:feedTab===gg.id?"#0f2438":"transparent",border:`1px solid ${feedTab===gg.id?AC:"#1c2c44"}`,color:feedTab===gg.id?AC:"#6b7f9e",borderRadius:"15px",cursor:"pointer",fontSize:"11px",fontWeight:"700",whiteSpace:"nowrap"}}>{gg.name}</button>)}
     </div>}
     <div style={{flex:1,overflow:"auto"}}>
       {!genre&&<div style={{margin:"10px 14px",padding:"11px",background:"#0e1a2e",border:"1px solid #1c2c44",borderRadius:"11px",fontSize:"11px",color:"#6b7f9e",textAlign:"center",lineHeight:1.7}}>💻 인터넷 › 장르연구소에서 장르를 만들면<br/>더 실감나는 반응이 생성돼요</div>}
