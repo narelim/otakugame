@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { SAVE_KEY } from "../data/gameData.js";
-import { BOOTH_VIEW_H, BOOTH_WIDTHS, BOOTH_ZONES, zoneOf, BOOTH_CATS, BOOTH_CATALOG, catalogItem, ART_POSTER, layoutBonuses, invFromLegacy } from "../data/boothData.js";
+import { BOOTH_VIEW_H, BOOTH_WIDTHS, BOOTH_ZONES, zoneOf, BOOTH_CATS, BOOTH_CATALOG, catalogItem, ART_POSTER_SIZES, ART_POSTER_MAX, artPosterSpec, layoutBonuses, invFromLegacy } from "../data/boothData.js";
 import { logTx } from "../systems/bankSystem.js";
 
 /* ============================================================
@@ -18,6 +18,17 @@ const nextIid = () => "b" + Date.now().toString(36) + (_iid++);
 
 function loadArts() {
   try { const raw = localStorage.getItem(SAVE_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
+}
+
+// 배치물 스펙: 카탈로그 물품 또는 내 그림 포스터(사이즈 선택)
+const specFor = (p) => p.kind === "art" ? artPosterSpec(p.size) : catalogItem(p.refId);
+// 존 안으로 중심좌표 클램프 (비율계: x=부스폭, y=BOOTH_VIEW_H)
+function clampToZoneW(c, x, y, boothW) {
+  const z = zoneOf(c.zone);
+  const rw = Math.min(1, (c.fullWidth ? boothW : c.w) / boothW), rh = Math.min(1, c.h / BOOTH_VIEW_H);
+  const x2 = c.fullWidth ? 0.5 : Math.max(rw / 2, Math.min(1 - rw / 2, x));
+  const yMin = z.y0 / BOOTH_VIEW_H + rh / 2, yMax = Math.max(yMin, z.y1 / BOOTH_VIEW_H - rh / 2);
+  return { x: x2, y: Math.max(yMin, Math.min(yMax, y)) };
 }
 
 // 테이블보 패턴 → CSS background
@@ -58,7 +69,9 @@ export default function BoothPlannerApp({ state, setState }) {
 
   const [placed, setPlaced] = useState(() => {
     const l = state && state.boothLayout;
-    return (l && l.version === 2 && Array.isArray(l.items)) ? l.items : [];
+    const items = (l && l.version === 2 && Array.isArray(l.items)) ? l.items : [];
+    // 규격 변경(뷰 높이·존) 대비: 로드 시 각 물품을 자기 존 안으로 재클램프
+    return items.map(p => { const c = specFor(p); return c ? { ...p, ...clampToZoneW(c, p.x, p.y, BOOTH_WIDTHS[(state && state.boothSize) || "small"] || 120) } : null; }).filter(Boolean);
   });
   const [selected, setSelected] = useState(null);
   const [cat, setCat] = useState("banner"); // 카테고리 id | "art"
@@ -73,20 +86,13 @@ export default function BoothPlannerApp({ state, setState }) {
   const countOf = (refId) => placed.filter(p => p.kind === "item" && p.refId === refId).length;
   const posterCount = placed.filter(p => p.kind === "art").length;
 
-  // 존 내부로 중심좌표 클램프 (비율계: x=부스폭, y=BOOTH_VIEW_H)
-  const clampToZone = (c, x, y) => {
-    const z = zoneOf(c.zone);
-    const rw = (c.fullWidth ? boothW : c.w) / boothW, rh = c.h / BOOTH_VIEW_H;
-    const x2 = c.fullWidth ? 0.5 : Math.max(rw / 2, Math.min(1 - rw / 2, x));
-    const yMin = z.y0 / BOOTH_VIEW_H + rh / 2, yMax = z.y1 / BOOTH_VIEW_H - rh / 2;
-    return { x: x2, y: Math.max(yMin, Math.min(yMax, y)) };
-  };
+  const clampToZone = (c, x, y) => clampToZoneW(c, x, y, boothW);
 
   const addItem = (c) => {
     if (cat === "art") {
-      if (posterCount >= ART_POSTER.max) { setToast(`포스터는 최대 ${ART_POSTER.max}장까지!`); return; }
-      const pos = clampToZone({ ...ART_POSTER, fullWidth: false }, 0.5, 0.35);
-      const inst = { iid: nextIid(), kind: "art", refId: c.id, name: c.name, img: c.img, ...pos };
+      if (posterCount >= ART_POSTER_MAX) { setToast(`포스터는 최대 ${ART_POSTER_MAX}장까지!`); return; }
+      const pos = clampToZone(artPosterSpec("a3"), 0.5, 0.4);
+      const inst = { iid: nextIid(), kind: "art", refId: c.id, name: c.name, img: c.img, size: "a3", ...pos };
       setPlaced(p => [...p, inst]); setSelected(inst.iid); return;
     }
     if (countOf(c.id) >= c.max) { setToast(`${c.name}은(는) 최대 ${c.max}개까지!`); return; }
@@ -98,7 +104,7 @@ export default function BoothPlannerApp({ state, setState }) {
     setSelected(inst.iid);
   };
 
-  const specOf = (p) => p.kind === "art" ? { ...ART_POSTER, fullWidth: false } : catalogItem(p.refId);
+  const specOf = specFor;
   const onDown = (e, inst) => {
     e.stopPropagation(); setSelected(inst.iid);
     const r = stageRef.current.getBoundingClientRect();
@@ -108,11 +114,12 @@ export default function BoothPlannerApp({ state, setState }) {
     try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ }
   };
   const onMove = (e) => {
-    if (!dragRef.current) return;
+    const d = dragRef.current; // setState 업데이터는 지연 실행되므로 지금 시점 값을 캡처 (onUp이 먼저 비워도 안전)
+    if (!d || !stageRef.current) return;
     const r = stageRef.current.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - dragRef.current.dx;
-    const py = (e.clientY - r.top) / r.height - dragRef.current.dy;
-    setPlaced(ps => ps.map(p => { if (p.iid !== dragRef.current.iid) return p; const pos = clampToZone(specOf(p), px, py); return { ...p, ...pos }; }));
+    const px = (e.clientX - r.left) / r.width - d.dx;
+    const py = (e.clientY - r.top) / r.height - d.dy;
+    setPlaced(ps => ps.map(p => { if (p.iid !== d.iid) return p; const spec = specOf(p); if (!spec) return p; return { ...p, ...clampToZone(spec, px, py) }; }));
   };
   const onUp = (e) => { dragRef.current = null; setDragZone(null); try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* noop */ } };
 
@@ -151,9 +158,13 @@ export default function BoothPlannerApp({ state, setState }) {
     const zonePct = (z) => ({ top: `${z.y0 / BOOTH_VIEW_H * 100}%`, height: `${(z.y1 - z.y0) / BOOTH_VIEW_H * 100}%` });
     const tableZ = zoneOf("table"), frontZ = zoneOf("front");
     return (
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#171426", overflow: "hidden" }}>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", justifyContent: "center", padding: "10px 10px 0", background: "linear-gradient(180deg,#1c1830 0%,#262040 66%,#38315a 66%,#2e2848 100%)", overflow: "hidden", boxSizing: "border-box" }}>
+        {/* 행사장 연출: 옆 부스 실루엣 + 바닥 */}
+        <div style={{ position: "absolute", left: "-4%", bottom: "10%", width: "16%", height: "52%", background: "linear-gradient(180deg,#241f3a,#1d1930)", borderRadius: 6, opacity: 0.8, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", right: "-4%", bottom: "10%", width: "16%", height: "52%", background: "linear-gradient(180deg,#241f3a,#1d1930)", borderRadius: 6, opacity: 0.8, pointerEvents: "none" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "10%", background: "linear-gradient(180deg,#403866,#332c52)", pointerEvents: "none" }} />
         <div ref={readonly ? null : stageRef} onPointerDown={readonly ? undefined : () => setSelected(null)}
-          style={{ position: "relative", aspectRatio: `${boothW} / ${BOOTH_VIEW_H}`, maxWidth: "94%", maxHeight: "94%", width: boothW >= 180 ? "94%" : "auto", height: boothW >= 180 ? "auto" : "94%", background: "linear-gradient(180deg,#efeaf8 0%,#e6dff2 100%)", borderRadius: 8, boxShadow: "0 10px 40px rgba(0,0,0,0.45)" }}>
+          style={{ position: "relative", aspectRatio: `${boothW} / ${BOOTH_VIEW_H}`, maxWidth: "97%", maxHeight: "96%", width: boothW >= 240 ? "97%" : "auto", height: boothW >= 240 ? "auto" : "96%", marginBottom: "4%", background: "linear-gradient(180deg,#efeaf8 0%,#e6dff2 100%)", borderRadius: "8px 8px 4px 4px", boxShadow: "0 14px 50px rgba(0,0,0,0.55)" }}>
           {/* 배너봉 / 뒷벽 / 테이블 구조 */}
           <div style={{ position: "absolute", left: "2%", right: "2%", top: `${zoneOf("top").y1 / BOOTH_VIEW_H * 100}%`, height: 3, background: "#8a8098", borderRadius: 2 }} />
           <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf("wall")), background: "linear-gradient(180deg,#ded6ee,#d4cbe8)" }} />
@@ -231,11 +242,11 @@ export default function BoothPlannerApp({ state, setState }) {
     <div style={{ height: "100%", display: "flex", flexDirection: "column", background: "#0d0d1a", color: "#e0e0ff", fontFamily: "'Noto Sans KR',sans-serif", position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 20px", borderBottom: "1px solid #2a2a4a", background: "#12122a" }}>
         <div style={{ fontSize: 15, fontWeight: 800, color: "#c084fc" }}>🏪 부.꾸 — 꿈의 부스를 만들어보자!</div>
-        <div style={{ fontSize: 12, color: "#9a8fc0" }}>부스 {boothSize === "small" ? "소형 (90cm)" : boothSize === "medium" ? "중형 (180cm)" : "대형 (360cm)"} · 실제 크기 비율 배치</div>
+        <div style={{ fontSize: 12, color: "#9a8fc0" }}>부스 {boothSize === "small" ? "1부스 (책상 120cm)" : boothSize === "medium" ? "2부스 (책상 240cm)" : "4부스 (책상 480cm)"} · 디스플레이 높이 상판 위 170cm · 실측 비율</div>
       </div>
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         {/* 좌: 카탈로그 */}
-        <div style={{ width: 260, flexShrink: 0, borderRight: "1px solid #2a2a4a", background: "#0f0f24", display: "flex", flexDirection: "column", padding: 12, gap: 8 }}>
+        <div style={{ width: 222, flexShrink: 0, borderRight: "1px solid #2a2a4a", background: "#0f0f24", display: "flex", flexDirection: "column", padding: 10, gap: 8 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
             {[...BOOTH_CATS, { id: "art", name: "내 그림", icon: "🖼", color: "#9a8fc0" }].map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} title={c.name} style={{ padding: "7px 0 5px", borderRadius: 8, border: `1px solid ${cat === c.id ? "#7c3aed" : "transparent"}`, cursor: "pointer", background: cat === c.id ? "#2a1a4a" : "#1a1a3a", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
@@ -243,12 +254,12 @@ export default function BoothPlannerApp({ state, setState }) {
               </button>))}
           </div>
           <div style={{ fontSize: 10, color: "#666", lineHeight: 1.5, padding: "2px 2px 0" }}>
-            {cat === "art" ? `🖼 갤러리 그림을 뒷벽 포스터(A3)로 · 최대 ${ART_POSTER.max}장` : `${catInfo.icon} ${catInfo.desc}`}
+            {cat === "art" ? `🖼 갤러리 그림을 뒷벽 포스터로 (A4~B2 크기 선택) · 최대 ${ART_POSTER_MAX}장` : `${catInfo.icon} ${catInfo.desc}`}
           </div>
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
             {catalog.length ? catalog.map(c => {
               const cnt = c.art ? posterCount : countOf(c.id);
-              const maxN = c.art ? ART_POSTER.max : c.max;
+              const maxN = c.art ? ART_POSTER_MAX : c.max;
               const full = c.art ? posterCount >= maxN : cnt >= maxN;
               const own = c.art ? 0 : (inv[c.id] || 0);
               return (
@@ -283,9 +294,16 @@ export default function BoothPlannerApp({ state, setState }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>{selInst.kind === "art" ? `내 그림 포스터 · ${selInst.name}` : catalogItem(selInst.refId).name}</div>
                 <div style={{ fontSize: 11, color: "#9a8fc0", marginTop: 3 }}>
-                  {selInst.kind === "art" ? "A3 포스터 · 무료" : <>{catalogItem(selInst.refId).desc} · <span style={{ color: "#4cc9f0" }}>인지도 +{Math.round((catalogItem(selInst.refId).fameBonus || 0) * 100)}%</span> <span style={{ color: "#06d6a0" }}>판매율 +{Math.round((catalogItem(selInst.refId).sellBonus || 0) * 100)}%</span> (개당)</>}
+                  {selInst.kind === "art" ? `${(ART_POSTER_SIZES.find(s => s.id === (selInst.size || "a3")) || {}).name || "A3"} 포스터 · 무료` : <>{catalogItem(selInst.refId).desc} · <span style={{ color: "#4cc9f0" }}>인지도 +{Math.round((catalogItem(selInst.refId).fameBonus || 0) * 100)}%</span> <span style={{ color: "#06d6a0" }}>판매율 +{Math.round((catalogItem(selInst.refId).sellBonus || 0) * 100)}%</span> (개당)</>}
                 </div>
               </div>
+              {/* 포스터 크기 선택 */}
+              {selInst.kind === "art" && (
+                <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5 }}>
+                  <span style={{ fontSize: 10, color: "#888", flexShrink: 0 }}>📐 크기:</span>
+                  {ART_POSTER_SIZES.map(s => { const on = (selInst.size || "a3") === s.id;
+                    return (<button key={s.id} onClick={() => setPlaced(ps => ps.map(p => p.iid === selInst.iid ? { ...p, size: s.id, ...clampToZone(artPosterSpec(s.id), p.x, p.y) } : p))} style={{ padding: "7px 11px", borderRadius: 7, border: `1.5px solid ${on ? "#7c3aed" : "#2a2a4a"}`, background: on ? "#2a1a4a" : "#12122a", color: on ? "#c084fc" : "#888", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>{s.name}</button>); })}
+                </div>)}
               {/* 현수막 인쇄: 갤러리 그림 적용 */}
               {selInst.kind === "item" && catalogItem(selInst.refId).printable && (
                 <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 5, maxWidth: 300, overflow: "auto" }}>
@@ -301,7 +319,7 @@ export default function BoothPlannerApp({ state, setState }) {
         </div>
 
         {/* 우: 배치 목록 + 효과 + 결제 */}
-        <div style={{ width: 240, flexShrink: 0, borderLeft: "1px solid #2a2a4a", background: "#0f0f24", display: "flex", flexDirection: "column", padding: 12 }}>
+        <div style={{ width: 210, flexShrink: 0, borderLeft: "1px solid #2a2a4a", background: "#0f0f24", display: "flex", flexDirection: "column", padding: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 800, color: "#ffd166", marginBottom: 8 }}>📋 배치된 물품 ({placed.length})</div>
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 5 }}>
             {placed.length ? [...placed].reverse().map(p => { const c = p.kind === "item" ? catalogItem(p.refId) : null;
