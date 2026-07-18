@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import { MajorlandScreen } from "./gameScreens.jsx";
+import { BOOTH_SIZES, SCALE_LABEL } from "../data/gameData.js";
+import { logTx } from "../systems/bankSystem.js";
+import { pushMessage } from "../systems/messageSystem.js";
 import GoodsFactoryStore from "./GoodsFactoryStore.jsx";
 import GenreLabSite from "./GenreLabSite.jsx";
 
@@ -26,16 +28,140 @@ function Site({ onHome, children }) {
   );
 }
 
+// ── 메이저랜드 행사 정보/부스 신청 — 사이트 톤(라이트·웜)에 맞춘 리뉴얼 ──
+const ML = { pri: "#ff6b6b", deep: "#d94f5c", mut: "#b08085", bd: "#ffd9d9", card: { background: "#fff", border: "1px solid #ffd9d9", borderRadius: 16, boxShadow: "0 3px 14px rgba(255,107,107,0.1)" } };
+const DOW = { sat: "토", sun: "일" };
+
+function MajorlandEvents({ state, setState, mode, goApply }) {
+  const [toast, setToast] = useState(null);
+  const [applying, setApplying] = useState(null);
+  const [boothName, setBoothName] = useState((state.boothApp && state.boothApp.name) || "");
+  const [boothDesc, setBoothDesc] = useState((state.boothApp && state.boothApp.desc) || "");
+  const [selSize, setSelSize] = useState(state.boothSize || "small");
+  useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 2600); return () => clearTimeout(t); }, [toast]);
+
+  const sched = ((state.genre && state.genre.eventSchedule) || []).filter(e => e.endDay >= state.day).slice(0, 10);
+  const applied = state.appliedEvents || [];
+  const curSize = BOOTH_SIZES.find(b => b.id === (state.boothSize || "small")) || BOOTH_SIZES[0];
+  const ae = state.activeEvent;
+
+  const openApply = (ev) => {
+    if ((state.fame || 0) < ev.minFame) { setToast({ t: `인지도 ${ev.minFame} 이상 필요해요`, bad: true }); return; }
+    if (ev.requiresApplication && state.day > ev.applyBy) { setToast({ t: "접수가 마감된 행사예요", bad: true }); return; }
+    setBoothName((state.boothApp && state.boothApp.name) || ((state.genre && state.genre.name) ? state.genre.name + " 서클" : ""));
+    setBoothDesc((state.boothApp && state.boothApp.desc) || "");
+    setSelSize(state.boothSize || "small");
+    setApplying(ev);
+  };
+  const sizeCfg = BOOTH_SIZES.find(b => b.id === selSize) || BOOTH_SIZES[0];
+  const sizeUpCost = applying ? (sizeCfg.tiles > curSize.tiles ? sizeCfg.price : 0) : 0;
+  const totalFee = applying ? (applying.boothFee + sizeUpCost) : 0;
+  const confirmApply = () => {
+    const ev = applying; if (!ev) return;
+    if (!boothName.trim()) { setToast({ t: "서클 이름을 입력해주세요", bad: true }); return; }
+    if ((state.gold || 0) < totalFee) { setToast({ t: `골드 부족 (₩${totalFee.toLocaleString()} 필요)`, bad: true }); return; }
+    setState(s => { let ns = { ...s, boothSize: selSize, activeEvent: ev, boothApp: { name: boothName.trim(), desc: boothDesc.trim(), submitted: true }, appliedEvents: [...(s.appliedEvents || []), ev.id] }; if (totalFee > 0) ns = logTx(ns, -totalFee, `${ev.name} 부스 신청비`, "🎪"); return pushMessage(ns, { from: "Majorland", avatar: "🎪", text: `[접수 완료] ${ev.name} 부스 신청이 접수되었습니다. D-${Math.max(0, ev.startDay - s.day)}, 준비 잘 하세요!` }); });
+    setApplying(null);
+    setToast({ t: `✓ ${ev.name} 신청 완료! 부스 planner에서 꾸미고 행사날 참가하세요`, bad: false });
+  };
+  const stageInfo = (ev) => { const d = ev.startDay - state.day; if (d <= 0) return { t: "오늘 행사 당일! ⏻ 컴퓨터를 끄고 행사장으로", c: "#1e8e3e" }; if (d === 1) return { t: "D-1 · 포장 & 부스 배치 마무리", c: "#c98a00" }; if (d <= 5) return { t: `D-${d} · 아크릴·회지 추가 주문 마감 임박!`, c: ML.deep }; if (d <= 7) return { t: `D-${d} · 굿즈 주문 마감 권장`, c: "#c98a00" }; return { t: `D-${d} · 준비 기간`, c: "#999" }; };
+  const toastBox = toast && <div style={{ padding: "10px 16px", borderRadius: 10, marginBottom: 14, fontSize: 13, fontWeight: 700, textAlign: "center", background: toast.bad ? "#fdeaea" : "#e8f6ec", color: toast.bad ? ML.deep : "#1e8e3e", border: `1px solid ${toast.bad ? "#f5c2c2" : "#bfe3c9"}` }}>{toast.t}</div>;
+
+  // ── 신청서 ──
+  if (applying) { const ev = applying; const dday = ev.startDay - state.day;
+    return (<div style={{ maxWidth: 640, margin: "0 auto" }}>
+      {toastBox}
+      <button onClick={() => setApplying(null)} style={{ padding: "7px 16px", borderRadius: 8, border: `1px solid ${ML.bd}`, background: "#fff", color: ML.mut, cursor: "pointer", fontSize: 13, marginBottom: 14 }}>← 행사 목록으로</button>
+      <div style={{ ...ML.card, padding: 22, marginBottom: 16, background: "linear-gradient(135deg,#fff,#fff3ee)" }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: "#fff", background: ML.pri, display: "inline-block", padding: "3px 12px", borderRadius: 12, marginBottom: 8 }}>{SCALE_LABEL[ev.scale] || ev.scale}</div>
+        <div style={{ fontSize: 22, fontWeight: 900, color: "#3d2b2e" }}>{ev.name}</div>
+        <div style={{ fontSize: 13, color: ML.mut, marginTop: 5 }}>{ev.days === 2 ? "양일" : "하루"} 행사 · D-{Math.max(0, dday)} ({DOW[ev.dayOfWeek] || ""}요일 시작) · 최대 판매 {ev.maxSales}개</div>
+      </div>
+      <div style={{ ...ML.card, padding: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 800, color: ML.deep, marginBottom: 16 }}>📋 부스 신청서</div>
+        <div style={{ fontSize: 12, color: ML.mut, marginBottom: 6, fontWeight: 700 }}>서클(부스) 이름 *</div>
+        <input value={boothName} onChange={e => setBoothName(e.target.value)} placeholder="예: 이브의 작업실" style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", border: "1px solid #eccfcf", borderRadius: 9, fontSize: 15, marginBottom: 16, color: "#3d2b2e" }} />
+        <div style={{ fontSize: 12, color: ML.mut, marginBottom: 6, fontWeight: 700 }}>부스 설명 (한줄)</div>
+        <input value={boothDesc} onChange={e => setBoothDesc(e.target.value.slice(0, 60))} placeholder="달달한 자캐 굿즈 팝니다" style={{ width: "100%", boxSizing: "border-box", padding: "11px 14px", border: "1px solid #eccfcf", borderRadius: 9, fontSize: 14, marginBottom: 16, color: "#3d2b2e" }} />
+        <div style={{ fontSize: 12, color: ML.mut, marginBottom: 8, fontWeight: 700 }}>부스 크기</div>
+        <div style={{ display: "flex", gap: 9, marginBottom: 18 }}>
+          {BOOTH_SIZES.map(sz => { const sel = selSize === sz.id; const up = sz.tiles > curSize.tiles;
+            return (<button key={sz.id} onClick={() => setSelSize(sz.id)} style={{ flex: 1, padding: "12px 6px", borderRadius: 11, cursor: "pointer", textAlign: "center", background: sel ? "linear-gradient(135deg,#ff6b6b,#ffa94d)" : "#fff", border: `1.5px solid ${sel ? ML.pri : ML.bd}`, color: sel ? "#fff" : "#8a6a6e" }}>
+              <div style={{ fontSize: 14, fontWeight: 800 }}>{sz.name}</div>
+              <div style={{ fontSize: 10, marginTop: 2, color: sel ? "#ffeede" : ML.mut }}>{sz.desc}</div>
+              <div style={{ fontSize: 10, marginTop: 3, fontWeight: 700, color: sel ? "#fff" : up && sz.price > 0 ? "#c98a00" : "#1e8e3e" }}>{up && sz.price > 0 ? `업그레이드 ₩${sz.price.toLocaleString()}` : "보유 크기"}</div>
+            </button>); })}
+        </div>
+        <div style={{ background: "#fff6f2", border: `1px solid ${ML.bd}`, borderRadius: 11, padding: 15, marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: ML.mut, marginBottom: 4 }}><span>부스 참가비</span><span>₩{(applying.boothFee || 0).toLocaleString()}</span></div>
+          {sizeUpCost > 0 && <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: ML.mut, marginBottom: 4 }}><span>부스 확장 ({sizeCfg.name})</span><span>₩{sizeUpCost.toLocaleString()}</span></div>}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 17, fontWeight: 900, color: "#3d2b2e", borderTop: "1px dashed #eccfcf", paddingTop: 8, marginTop: 4 }}><span>총 결제액</span><span style={{ color: ML.deep }}>₩{totalFee.toLocaleString()}</span></div>
+          <div style={{ fontSize: 11, color: (state.gold || 0) >= totalFee ? "#1e8e3e" : ML.deep, textAlign: "right", marginTop: 4 }}>{(state.gold || 0) >= totalFee ? `결제 후 잔액 ₩${((state.gold || 0) - totalFee).toLocaleString()}` : "골드 부족!"}</div>
+        </div>
+        <button onClick={confirmApply} style={{ width: "100%", padding: 14, borderRadius: 11, border: "none", background: "linear-gradient(135deg,#ff6b6b,#ffa94d)", color: "#fff", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 14px rgba(255,107,107,0.35)" }}>✦ 신청 제출</button>
+      </div>
+    </div>);
+  }
+
+  // ── 부스 신청(현황) 탭 ──
+  if (mode === "apply") {
+    return (<div style={{ maxWidth: 640, margin: "0 auto" }}>
+      {toastBox}
+      {ae ? (<div style={{ ...ML.card, padding: 24, background: "linear-gradient(135deg,#fff,#fff3ee)" }}>
+        <div style={{ fontSize: 12, fontWeight: 800, color: "#1e8e3e", background: "#e8f6ec", display: "inline-block", padding: "3px 12px", borderRadius: 12, marginBottom: 10 }}>✓ 신청 완료</div>
+        <div style={{ fontSize: 22, fontWeight: 900, color: "#3d2b2e" }}>{ae.name}</div>
+        <div style={{ fontSize: 13, color: ML.mut, marginTop: 4 }}>{SCALE_LABEL[ae.scale] || ""} · 부스명 "{(state.boothApp && state.boothApp.name) || "미정"}" · {curSize.name} 부스</div>
+        <div style={{ marginTop: 14, padding: "11px 15px", borderRadius: 10, background: "#fff", border: `1px solid ${ML.bd}`, fontSize: 14, fontWeight: 700, color: stageInfo(ae).c }}>{stageInfo(ae).t}</div>
+        <div style={{ fontSize: 12, color: ML.mut, marginTop: 12, lineHeight: 1.8 }}>💡 준비 순서: 🎨 스튜디오에서 그림 → 🏭 굿즈컴퍼니에서 제작 → 🏪 부스 planner로 꾸미기 → 행사 당일 ⏻ 행사장 가기</div>
+      </div>) : (<div style={{ ...ML.card, padding: 40, textAlign: "center" }}>
+        <div style={{ fontSize: 40, marginBottom: 10 }}>🎪</div>
+        <div style={{ fontSize: 15, fontWeight: 800, color: "#3d2b2e", marginBottom: 6 }}>신청한 행사가 없어요</div>
+        <div style={{ fontSize: 13, color: ML.mut, marginBottom: 18 }}>행사 정보에서 참가할 행사를 골라 신청하세요</div>
+        <button onClick={goApply} style={{ padding: "11px 26px", borderRadius: 22, border: "none", background: ML.pri, color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer" }}>행사 정보 보러가기</button>
+      </div>)}
+    </div>);
+  }
+
+  // ── 행사 정보 탭 (일정 리스트) ──
+  return (<div style={{ maxWidth: 760, margin: "0 auto" }}>
+    {toastBox}
+    {!state.genre && <div style={{ ...ML.card, padding: 30, textAlign: "center", color: ML.mut, fontSize: 14, lineHeight: 1.8 }}>🧪 <b style={{ color: "#7c3aed" }}>장르연구소</b>에서 장르를 만들면<br />내 장르의 행사 일정이 열려요</div>}
+    {sched.map(ev => { const dday = ev.startDay - state.day; const isApplied = applied.includes(ev.id) || (ae && ae.id === ev.id);
+      const closed = ev.requiresApplication && state.day > ev.applyBy; const lackFame = (state.fame || 0) < ev.minFame;
+      return (<div key={ev.id} style={{ ...ML.card, padding: "18px 22px", marginBottom: 12, display: "flex", alignItems: "center", gap: 18, opacity: closed && !isApplied ? 0.6 : 1 }}>
+        <div style={{ width: 74, flexShrink: 0, textAlign: "center", padding: "10px 0", borderRadius: 12, background: dday <= 0 ? "#e8f6ec" : "#fff3ee", border: `1px solid ${dday <= 0 ? "#bfe3c9" : ML.bd}` }}>
+          <div style={{ fontSize: 17, fontWeight: 900, color: dday <= 0 ? "#1e8e3e" : ML.deep }}>{dday <= 0 ? "D-DAY" : `D-${dday}`}</div>
+          <div style={{ fontSize: 10, color: ML.mut }}>{DOW[ev.dayOfWeek] || ""}요일 · {ev.days === 2 ? "양일" : "하루"}</div>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 10, fontWeight: 800, color: "#fff", background: ev.scale === "mega" ? "#9b30c9" : ev.scale === "large" ? ML.pri : ev.scale === "medium" ? "#ffa94d" : "#8fbf6e", padding: "2px 9px", borderRadius: 10 }}>{SCALE_LABEL[ev.scale] || ev.scale}</span>
+            <span style={{ fontSize: 16, fontWeight: 900, color: "#3d2b2e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.name}</span>
+          </div>
+          <div style={{ fontSize: 12, color: ML.mut }}>
+            참가비 {ev.boothFee ? `₩${ev.boothFee.toLocaleString()}` : "무료"} · 최대 판매 {ev.maxSales}개
+            {ev.minFame > 0 && <span style={{ color: lackFame ? ML.deep : "#1e8e3e" }}> · 인지도 {ev.minFame}+ {lackFame ? "(부족)" : "✓"}</span>}
+            {ev.requiresApplication && <span style={{ color: closed ? ML.deep : "#c98a00" }}> · 접수 {closed ? "마감됨" : `~Day ${ev.applyBy}`}</span>}
+          </div>
+        </div>
+        {isApplied
+          ? <span style={{ flexShrink: 0, padding: "9px 18px", borderRadius: 20, background: "#e8f6ec", color: "#1e8e3e", fontSize: 13, fontWeight: 800 }}>✓ 신청완료</span>
+          : <button onClick={() => openApply(ev)} disabled={closed || lackFame} style={{ flexShrink: 0, padding: "10px 22px", borderRadius: 20, border: "none", cursor: closed || lackFame ? "not-allowed" : "pointer", fontWeight: 800, fontSize: 13, background: closed || lackFame ? "#f0e2e2" : "linear-gradient(135deg,#ff6b6b,#ffa94d)", color: closed || lackFame ? "#b99" : "#fff", boxShadow: closed || lackFame ? "none" : "0 3px 10px rgba(255,107,107,0.3)" }}>{closed ? "접수마감" : lackFame ? "🔒 인지도" : "신청하기"}</button>}
+      </div>); })}
+    {state.genre && !sched.length && <div style={{ ...ML.card, padding: 30, textAlign: "center", color: ML.mut, fontSize: 14 }}>예정된 행사가 없어요</div>}
+  </div>);
+}
+
 // ── 메이저랜드: 행사/축제 사이트 (로고 중앙, 따뜻한 톤) ──
 function Majorland({ onHome, state, setState }) {
-  const [tab, setTab] = useState("about");
+  const [tab, setTab] = useState("events");
   const NAV = [["about", "About ML"], ["events", "행사 정보"], ["apply", "부스 신청"], ["qna", "Q&A"]];
   return (
     <Site onHome={onHome}>
       <div style={{ minHeight: "100%", background: "linear-gradient(180deg,#fff5f0,#ffe8ef)", fontFamily: "'Noto Sans KR',sans-serif", padding: "20px 40px 60px" }}>
         <div style={{ textAlign: "center", padding: "18px 0 22px" }}>
           <div style={{ display: "inline-block", padding: "14px 40px", background: "linear-gradient(135deg,#ff6b6b,#ffa94d)", borderRadius: 16, color: "#fff", fontWeight: 900, fontSize: 30, letterSpacing: 2, boxShadow: "0 6px 20px rgba(255,107,107,0.4)" }}>🎪 MAJORLAND</div>
-          <div style={{ fontSize: 13, color: "#c0656e", marginTop: 8 }}>모두의 동인 행사 · 메이저랜드</div>
+          <div style={{ fontSize: 13, color: "#c0656e", marginTop: 8 }}>모두의 동인 행사 · 메이저랜드{state && state.genre ? ` · ${state.genre.name}` : ""}</div>
         </div>
         <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 24, flexWrap: "wrap" }}>
           {NAV.map(([id, label]) => (
@@ -43,7 +169,7 @@ function Majorland({ onHome, state, setState }) {
           ))}
         </div>
         {(tab === "events" || tab === "apply")
-          ? <div style={{ maxWidth: 900, margin: "0 auto", height: 560, background: "#0d0d1a", borderRadius: 16, overflow: "hidden", border: "1px solid #ffd9d9", boxShadow: "0 4px 20px rgba(255,107,107,0.15)" }}><MajorlandScreen state={state} setState={setState} /></div>
+          ? <MajorlandEvents key={tab} state={state} setState={setState} mode={tab} goApply={() => setTab("events")} />
           : <div style={{ maxWidth: 820, margin: "0 auto", background: "#fff", borderRadius: 18, border: "1px solid #ffd9d9", minHeight: 300, padding: 32, boxShadow: "0 4px 20px rgba(255,107,107,0.12)" }}>
             {tab === "about" && <div><h2 style={{ color: "#ff6b6b", margin: "0 0 12px" }}>About ML</h2><p style={{ color: "#777", lineHeight: 1.8 }}>메이저랜드는 서클과 팬이 만나는 국내 최대 동인 행사 플랫폼입니다. (소개 페이지 — 콘텐츠 예정)</p></div>}
             {tab === "qna" && <div><h2 style={{ color: "#ff6b6b", margin: "0 0 12px" }}>Q&A</h2><p style={{ color: "#999" }}>자주 묻는 질문 (준비중)</p></div>}

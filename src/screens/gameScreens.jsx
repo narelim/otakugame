@@ -2,11 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { DrawingApp } from "../components/DrawingApp.jsx";
 import { GOODS_TYPES, BADGE_SHAPES, BOOTH_ITEMS, CP_TYPES, DAILY_ACTIONS, BOOTH_SIZES, SCALE_LABEL, PHONE_APPS, FAN_ACCOUNTS, MEDIA_LIST, MEDIA_GENRES, APPEARANCE_TAGS, PERSONALITY_TAGS, CONCEPT_TAGS, POSITION_TAGS, POPULARITY_TAGS, POP_TIP, VIBE_TAGS, BG_TAGS, AU_TAGS, GTYPE_LIST, ALLCHAR_MODES, CP_FIX, CP_STRENGTH, CP_CONTACT, CP_POP, MAX_SAVES, SAVE_KEY, ACT_MAX } from "../data/gameData.js";
 import { starPath, heartPath, buildOutline } from "../utils/draw.js";
-import { applyReadyOrders } from "../systems/goodsSystem.js";
 import { switchActiveGenre, canAddGenre, generateGenreName, legacyFields } from "../systems/genreSystem.js";
 import { generateEventSchedule, isEventDay, nearestUpcomingEvent, advanceDay, endOfDay } from "../systems/eventSystem.js";
 import { logTx } from "../systems/bankSystem.js";
 import { pushMessage } from "../systems/messageSystem.js";
+import { boothBonuses, catalogItem } from "../data/boothData.js";
 import { idbAll, idbPut, idbDel, idbClear, prefetchImages, popFromPool, fanPostText } from "../systems/imageSystem.js";
 import { pickOne, buildNpcRoster, saveRoster, getRoster, rosterEligible, npcPostText, makeTimelineUpdate } from "../systems/tweetSystem.js";
 import { nextGameDate } from "../systems/snsEventSystem.js";
@@ -645,8 +645,11 @@ export function EventScreen({state,setState,onBack}){
   const animRef=useRef(null);
   useEffect(()=>()=>{if(animRef.current)clearInterval(animRef.current);},[]);
   const owned=state.boothItems;
-  const totalFame=owned.reduce((a,id)=>a+(BOOTH_ITEMS.find(b=>b.id===id)?.fameBonus||0),0);
-  const totalSell=owned.reduce((a,id)=>a+(BOOTH_ITEMS.find(b=>b.id===id)?.sellBonus||0),0);
+  // 부스 보너스: 플래너 v2 레이아웃(개수 합산) 우선, 없으면 레거시 보유목록
+  const {fame:totalFame,sell:totalSell}=boothBonuses(state,BOOTH_ITEMS);
+  const boothChips=(state.boothLayout&&state.boothLayout.version===2)
+    ?state.boothLayout.items.map(p=>p.kind==="art"?{id:p.iid,icon:"🖼",name:"포스터"}:(catalogItem(p.refId)?{id:p.iid,icon:catalogItem(p.refId).icon,name:catalogItem(p.refId).name}:null)).filter(Boolean)
+    :owned.map(id=>{const it=BOOTH_ITEMS.find(b=>b.id===id);return it?{id,icon:it.icon,name:it.name}:null;}).filter(Boolean);
   const runEvent=()=>{
     setPhase("event");
     setSellAnim(0);
@@ -695,7 +698,7 @@ export function EventScreen({state,setState,onBack}){
     {state.activeEvent&&<div style={{fontSize:"10px",color:"#888",marginBottom:"4px"}}>{SCALE_LABEL[state.activeEvent.scale]||""} · 최대 판매 {state.activeEvent.maxSales}개{state.activeEvent.boothFee?` · 부스비 ₩${state.activeEvent.boothFee.toLocaleString()}`:""}</div>}
     <div style={{fontSize:"11px",color:"#888",marginBottom:"14px"}}>Day {state.day} · 굿즈 {state.goods.length}종 · 팔로워 {state.followers}명</div>
     {!(state.boothApp&&state.boothApp.submitted)&&<div style={{padding:"10px 12px",background:"#2a1a0a",border:"1px solid #ffd166",borderRadius:"10px",marginBottom:"12px",fontSize:"12px",color:"#ffd166",lineHeight:1.7}}>📱 아직 행사 신청 전이에요!<br/>📱 핸드폰 → <b>Majorland</b> 앱에서 부스 신청을 먼저 해주세요.</div>}
-    {owned.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginBottom:"12px",padding:"10px",background:"#12122a",borderRadius:"10px",border:"1px solid #2a2a4a"}}>{owned.map(id=>{const it=BOOTH_ITEMS.find(b=>b.id===id);return<span key={id} style={{fontSize:"11px",padding:"3px 8px",background:"#1a1a3a",borderRadius:"20px",color:"#c084fc"}}>{it.icon} {it.name}</span>;})}</div>}
+    {boothChips.length>0&&<div style={{display:"flex",flexWrap:"wrap",gap:"5px",marginBottom:"12px",padding:"10px",background:"#12122a",borderRadius:"10px",border:"1px solid #2a2a4a"}}>{boothChips.map(ch=><span key={ch.id} style={{fontSize:"11px",padding:"3px 8px",background:"#1a1a3a",borderRadius:"20px",color:"#c084fc"}}>{ch.icon} {ch.name}</span>)}</div>}
     <div style={{display:"flex",gap:"8px",marginBottom:"14px"}}><div style={{flex:1,padding:"8px",background:"#1a0a2e",borderRadius:"8px",textAlign:"center"}}><div style={{fontSize:"9px",color:"#888"}}>인지도보너스</div><div style={{fontSize:"14px",fontWeight:"900",color:"#c084fc"}}>+{Math.round(totalFame*100)}%</div></div><div style={{flex:1,padding:"8px",background:"#0a2a1a",borderRadius:"8px",textAlign:"center"}}><div style={{fontSize:"9px",color:"#888"}}>판매율보너스</div><div style={{fontSize:"14px",fontWeight:"900",color:"#06d6a0"}}>+{Math.round(totalSell*100)}%</div></div></div>
     <div style={{display:"flex",flexDirection:"column",gap:"7px",marginBottom:"14px"}}>{state.goods.map(g=><div key={g.id} style={{display:"flex",gap:"10px",padding:"10px 12px",background:"#12122a",borderRadius:"10px",border:"1px solid #2a2a4a",alignItems:"center"}}><img src={g.imageData} style={{width:"44px",height:"44px",objectFit:"contain",background:"#fff",borderRadius:"6px",flexShrink:0}}/><div><div style={{fontWeight:"700",fontSize:"13px"}}>{g.name}</div><div style={{fontSize:"11px",color:"#888"}}>{g.stock}개 · ₩{g.price.toLocaleString()}</div></div></div>)}</div>
     <div style={{display:"flex",gap:"10px"}}><button onClick={onBack} style={{flex:1,padding:"11px",background:"transparent",border:"1px solid #2a2a4a",color:"#888",borderRadius:"10px",cursor:"pointer"}}>← 부스로</button><button onClick={runEvent} disabled={!(state.boothApp&&state.boothApp.submitted)||!state.goods.length} style={{flex:2,padding:"11px",background:((state.boothApp&&state.boothApp.submitted)&&state.goods.length)?"linear-gradient(135deg,#e94560,#7c3aed)":"#1a1a3a",border:"none",color:((state.boothApp&&state.boothApp.submitted)&&state.goods.length)?"#fff":"#555",fontWeight:"900",fontSize:"14px",borderRadius:"10px",cursor:((state.boothApp&&state.boothApp.submitted)&&state.goods.length)?"pointer":"not-allowed",boxShadow:((state.boothApp&&state.boothApp.submitted)&&state.goods.length)?"0 4px 20px rgba(233,69,96,0.4)":"none"}}>{(state.boothApp&&state.boothApp.submitted)?"🎪 행사 시작!":"🔒 신청 필요"}</button></div>
