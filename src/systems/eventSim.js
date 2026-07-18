@@ -1,7 +1,7 @@
 import { BOOTH_ITEMS } from "../data/gameData.js";
 import { boothBonuses } from "../data/boothData.js";
 import { logTx } from "./bankSystem.js";
-import { endOfDay } from "./eventSystem.js";
+import { endOfDay, nearestAppliedEvent } from "./eventSystem.js";
 import { nextGameDate } from "./snsEventSystem.js";
 
 /* ============================================================
@@ -55,6 +55,9 @@ export function commitEventResult(s, r) {
   const soldOut = soldResults.some(x => x.sold > 0 && x.remaining === 0);
   const aeId = s.activeEvent && s.activeEvent.id;
   let ns = { ...s, fame: s.fame + fameEarned, followers: Math.max(0, s.followers + Math.floor(fameEarned * .1)), stamina: Math.max(0, s.stamina - staminaCost), mentalHealth: Math.max(0, Math.min(100, s.mentalHealth + mentalChange)), goods: updGoods, day: s.day + 1, gameDate: nextGameDate(s.gameDate), activeEvent: null, boothApp: { ...s.boothApp, submitted: false }, appliedEvents: (s.appliedEvents || []).filter(id => id !== aeId), flags: { ...s.flags, firstEvent: true, recentEvent: true, goodsSoldOut: soldOut }, eventHistory: [...s.eventHistory, { day: s.day, goldEarned, fameEarned }] };
+  // 다중 신청 지원: 끝난 행사를 빼고도 신청해둔 행사가 남아있으면 그 행사가 다음 활성 행사가 된다 (신청 상태 유지)
+  const nxt = nearestAppliedEvent(ns);
+  if (nxt) ns = { ...ns, activeEvent: nxt, boothApp: { ...ns.boothApp, submitted: true } };
   ns = logTx(ns, goldEarned, `${(s.activeEvent && s.activeEvent.name) || "행사"} 판매 수익`, "🎪", "event");
   return endOfDay(ns);
 }

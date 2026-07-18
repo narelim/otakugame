@@ -23,6 +23,11 @@ export function generateEventSchedule(genre,startDay){
   return out.slice(0,40);
 }
 export function isEventDay(s){const ev=s&&s.activeEvent;return !!(ev&&s.day>=ev.startDay&&s.day<=ev.endDay);}
+// 신청한 행사(appliedEvents) 중 가장 가까운 것 — 다중 신청 시 activeEvent는 항상 이 값이어야 함
+export function nearestAppliedEvent(s){
+  const ids=s.appliedEvents||[];
+  return ((s.genre&&s.genre.eventSchedule)||[]).filter(e=>ids.includes(e.id)&&e.endDay>=s.day).sort((a,b)=>a.startDay-b.startDay)[0]||null;
+}
 export function nearestUpcomingEvent(s){if(s.activeEvent&&s.activeEvent.startDay>=s.day)return s.activeEvent;const sc=((s.genre&&s.genre.eventSchedule)||[]).filter(e=>e.startDay>=s.day).sort((a,b)=>a.startDay-b.startDay);return sc[0]||s.activeEvent||null;}
 export function dDayNotice(s){const ev=nearestUpcomingEvent(s);if(!ev)return null;const d=ev.startDay-s.day;const map={14:`${ev.name} 접수 시작! 지금 신청하세요`,7:"굿즈 주문 마감이 다가오고 있어요",5:"아크릴·회지는 오늘까지만 주문 가능해요",3:"행사까지 3일! 포장 준비를 시작해요",1:"내일이 행사! 부스 배치를 확정해요",0:`${ev.name} 당일! 파이팅!`};return map[d]?{dday:d,msg:map[d],name:ev.name}:null;}
 // 날짜가 넘어간 직후의 공통 처리: 주문 완성(+메시지) → 월급일 입금. 취침/실시간/행사 정산이 공유.

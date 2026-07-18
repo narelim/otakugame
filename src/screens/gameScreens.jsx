@@ -3,7 +3,7 @@ import { DrawingApp } from "../components/DrawingApp.jsx";
 import { GOODS_TYPES, BADGE_SHAPES, BOOTH_ITEMS, CP_TYPES, DAILY_ACTIONS, BOOTH_SIZES, SCALE_LABEL, PHONE_APPS, FAN_ACCOUNTS, MEDIA_LIST, MEDIA_GENRES, APPEARANCE_TAGS, PERSONALITY_TAGS, CONCEPT_TAGS, POSITION_TAGS, POPULARITY_TAGS, POP_TIP, VIBE_TAGS, BG_TAGS, AU_TAGS, GTYPE_LIST, ALLCHAR_MODES, CP_FIX, CP_STRENGTH, CP_CONTACT, CP_POP, MAX_SAVES, SAVE_KEY, ACT_MAX } from "../data/gameData.js";
 import { starPath, heartPath, buildOutline } from "../utils/draw.js";
 import { switchActiveGenre, canAddGenre, generateGenreName, legacyFields } from "../systems/genreSystem.js";
-import { generateEventSchedule, isEventDay, nearestUpcomingEvent, advanceDay } from "../systems/eventSystem.js";
+import { generateEventSchedule, isEventDay, nearestUpcomingEvent, nearestAppliedEvent, advanceDay } from "../systems/eventSystem.js";
 import { simulateEvent, commitEventResult } from "../systems/eventSim.js";
 import { logTx } from "../systems/bankSystem.js";
 import { pushMessage } from "../systems/messageSystem.js";
@@ -811,7 +811,7 @@ export function MajorlandScreen({state,setState}){
     const ev=applyingEvent;if(!ev)return;
     if(!boothName.trim()){setToast({t:"서클 이름을 입력해주세요",bad:true});return;}
     if((state.gold||0)<totalFee){setToast({t:`골드 부족 (₩${totalFee.toLocaleString()} 필요)`,bad:true});return;}
-    setState(s=>{let ns={...s,boothSize:selSize,activeEvent:ev,boothApp:{name:boothName.trim(),desc:boothDesc.trim(),submitted:true},appliedEvents:[...(s.appliedEvents||[]),ev.id]};if(totalFee>0)ns=logTx(ns,-totalFee,`${ev.name} 부스 신청비`,"🎪","event");return pushMessage(ns,{from:"Majorland",avatar:"🎪",text:`[접수 완료] ${ev.name} 부스 신청이 접수되었습니다. D-${Math.max(0,ev.startDay-s.day)}, 준비 잘 하세요!`});});
+    setState(s=>{const applied=[...(s.appliedEvents||[]),ev.id];const act=nearestAppliedEvent({...s,appliedEvents:applied})||ev;let ns={...s,boothSize:selSize,activeEvent:act,boothApp:{name:boothName.trim(),desc:boothDesc.trim(),submitted:true},appliedEvents:applied};if(totalFee>0)ns=logTx(ns,-totalFee,`${ev.name} 부스 신청비`,"🎪","event");return pushMessage(ns,{from:"Majorland",avatar:"🎪",text:`[접수 완료] ${ev.name} 부스 신청이 접수되었습니다. D-${Math.max(0,ev.startDay-s.day)}, 준비 잘 하세요!`});});
     setApplyingEvent(null);
     setToast({t:`✓ ${ev.name} 신청 완료! 🏪 부스 꾸미고 🎪 행사장에서 참가하세요`,bad:false});
   };

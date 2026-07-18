@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { BOOTH_SIZES, SCALE_LABEL } from "../data/gameData.js";
+import { nearestAppliedEvent } from "../systems/eventSystem.js";
 import { logTx } from "../systems/bankSystem.js";
 import { pushMessage } from "../systems/messageSystem.js";
 import GoodsFactoryStore from "./GoodsFactoryStore.jsx";
@@ -60,7 +61,7 @@ function MajorlandEvents({ state, setState, mode, goApply }) {
     const ev = applying; if (!ev) return;
     if (!boothName.trim()) { setToast({ t: "서클 이름을 입력해주세요", bad: true }); return; }
     if ((state.gold || 0) < totalFee) { setToast({ t: `골드 부족 (₩${totalFee.toLocaleString()} 필요)`, bad: true }); return; }
-    setState(s => { let ns = { ...s, boothSize: selSize, activeEvent: ev, boothApp: { name: boothName.trim(), desc: boothDesc.trim(), submitted: true }, appliedEvents: [...(s.appliedEvents || []), ev.id] }; if (totalFee > 0) ns = logTx(ns, -totalFee, `${ev.name} 부스 신청비`, "🎪", "event"); return pushMessage(ns, { from: "Majorland", avatar: "🎪", text: `[접수 완료] ${ev.name} 부스 신청이 접수되었습니다. D-${Math.max(0, ev.startDay - s.day)}, 준비 잘 하세요!` }); });
+    setState(s => { const applied = [...(s.appliedEvents || []), ev.id]; const act = nearestAppliedEvent({ ...s, appliedEvents: applied }) || ev; let ns = { ...s, boothSize: selSize, activeEvent: act, boothApp: { name: boothName.trim(), desc: boothDesc.trim(), submitted: true }, appliedEvents: applied }; if (totalFee > 0) ns = logTx(ns, -totalFee, `${ev.name} 부스 신청비`, "🎪", "event"); return pushMessage(ns, { from: "Majorland", avatar: "🎪", text: `[접수 완료] ${ev.name} 부스 신청이 접수되었습니다. D-${Math.max(0, ev.startDay - s.day)}, 준비 잘 하세요!` }); });
     setApplying(null);
     setToast({ t: `✓ ${ev.name} 신청 완료! 부스 planner에서 꾸미고 행사날 참가하세요`, bad: false });
   };
