@@ -5,6 +5,7 @@ import { isEventDay, nearestUpcomingEvent } from "../systems/eventSystem.js";
 import { getJob, isWorkdayToday, hasWorkedToday } from "../systems/jobSystem.js";
 import { unreadCount } from "../systems/messageSystem.js";
 import { GoodsImg } from "../components/BoothStage.jsx";
+import Avatar from "../components/Avatar.jsx";
 import PhoneOS from "./PhoneOS.jsx";
 
 /* ============================================================
@@ -163,8 +164,11 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
         </div>
       </Hotspot>
 
-      {/* ── 러그 ── */}
+      {/* ── 러그 + 나(아바타) ── */}
       <div style={{ position: "absolute", left: "34%", bottom: "5%", width: "20%", height: "12%", background: night ? "radial-gradient(ellipse, #5a4a72, #4a3d5c)" : "radial-gradient(ellipse, #e8b4c8, #d99cb4)", borderRadius: "50%", opacity: 0.9, zIndex: 4 }} />
+      <div title="나 (코디는 인터넷 › 코디몰에서)" style={{ position: "absolute", left: "40%", bottom: "8%", height: "26%", zIndex: 6, filter: night ? "brightness(0.82)" : "none" }}>
+        <Avatar avatar={state.avatar} />
+      </div>
 
       {/* ── 현관문 (외출/행사장) ── */}
       <Hotspot x="87.5%" y="10%" w="10.5%" h="58%" label={eventDay ? "행사장으로 출발!" : "외출하기"} icon={eventDay ? "🎪" : "🚪"} pulse={eventDay} onClick={() => {

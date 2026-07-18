@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { BOOTH_VIEW_H, BOOTH_WIDTHS, zoneOf, catalogItem, specFor, clampToZoneW, autoGoodsInstances } from "../data/boothData.js";
 import { goodsMockup } from "../utils/goodsMockup.js";
+import Avatar from "./Avatar.jsx";
 
 /* ============================================================
    부스 비주얼 공유 컴포넌트 — 부.꾸(편집)와 행사 당일(관람)이 같은 그림을 그린다.
@@ -48,7 +49,8 @@ export function GoodsImg({ goods, style }) {
 }
 
 // 읽기 전용 부스 정면 뷰. goodsOverride로 연출용 재고(감소) 반영, children은 손님 등 오버레이.
-export function BoothScene({ state, goodsOverride, children, style }) {
+// keeper: 부스 지킴이 아바타 — 테이블 뒤에 상반신이 보이게 선다.
+export function BoothScene({ state, goodsOverride, keeper, children, style }) {
   const boothW = BOOTH_WIDTHS[(state && state.boothSize) || "small"] || 120;
   const genreName = state && state.genre && state.genre.name;
   const goodsArr = goodsOverride || ((state && state.goods) || []);
@@ -63,8 +65,12 @@ export function BoothScene({ state, goodsOverride, children, style }) {
     <div style={{ position: "relative", aspectRatio: `${boothW} / ${BOOTH_VIEW_H}`, background: "linear-gradient(180deg,#efeaf8 0%,#e6dff2 100%)", borderRadius: "8px 8px 4px 4px", boxShadow: "0 14px 50px rgba(0,0,0,0.55)", ...style }}>
       <div style={{ position: "absolute", left: "2%", right: "2%", top: `${zoneOf("top").y1 / BOOTH_VIEW_H * 100}%`, height: 3, background: "#8a8098", borderRadius: 2 }} />
       <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf("wall")), background: "linear-gradient(180deg,#ded6ee,#d4cbe8)" }} />
-      <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf("table")), background: "linear-gradient(180deg,#cfc4e6 0%,#c3b6de 12%,#bfb2db 100%)", borderTop: "3px solid #a99ac9" }} />
-      <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf("front")), background: "#b1a3d1", borderTop: "2px solid #9d8dc0" }} />
+      {/* 부스 지킴이 (테이블 뒤 상반신 — 하반신은 오버플로 클립) */}
+      {keeper && <div style={{ position: "absolute", left: "50%", top: "37%", height: "33.2%", width: "30%", transform: "translateX(-50%)", zIndex: 7, overflow: "hidden", display: "flex", justifyContent: "center", pointerEvents: "none" }}>
+        <div style={{ height: "168%", flexShrink: 0 }}><Avatar avatar={keeper} /></div>
+      </div>}
+      <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf("table")), background: "linear-gradient(180deg,#cfc4e6 0%,#c3b6de 12%,#bfb2db 100%)", borderTop: "3px solid #a99ac9", zIndex: 8 }} />
+      <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf("front")), background: "#b1a3d1", borderTop: "2px solid #9d8dc0", zIndex: 8 }} />
       {[...autos, ...layoutItems].map(p => {
         const c = specFor(p); if (!c) return null;
         const pos = clampToZoneW(c, p.x, p.y, boothW);

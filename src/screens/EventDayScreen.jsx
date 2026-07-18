@@ -148,7 +148,7 @@ export default function EventDayScreen({ state, setState, onExit }) {
   if (view === "result" && sim) {
     const leftovers = sim.soldResults.filter(r => r.remaining > 0).map(r => ({ ...r, g: state.goods.find(x => x.id === r.id) })).filter(x => x.g);
     return wrap(
-      <BoothScene state={state} goodsOverride={state.goods.map(g => { const r = sim.soldResults.find(x => x.id === g.id); return { ...g, stock: r ? r.remaining : g.stock }; })} style={{ height: "92%", marginBottom: "3%" }} />,
+      <BoothScene state={state} keeper={state.avatar} goodsOverride={state.goods.map(g => { const r = sim.soldResults.find(x => x.id === g.id); return { ...g, stock: r ? r.remaining : g.stock }; })} style={{ height: "92%", marginBottom: "3%" }} />,
       <div style={{ width: 380, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16, overflow: "auto" }}>
         <div style={{ background: "#1a0a2e", border: "1px solid #7c3aed", borderRadius: 16, padding: 20 }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#c084fc", marginBottom: 12 }}>📋 행사 결과</div>
@@ -173,7 +173,7 @@ export default function EventDayScreen({ state, setState, onExit }) {
   // ── 라이브 ──
   if (view === "live") {
     return wrap(
-      <BoothScene state={state} goodsOverride={goodsLive} style={{ height: "92%", marginBottom: "3%" }}>{customerLayer}</BoothScene>,
+      <BoothScene state={state} keeper={state.avatar} goodsOverride={goodsLive} style={{ height: "92%", marginBottom: "3%" }}>{customerLayer}</BoothScene>,
       <div style={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", gap: 10, paddingBottom: 16 }}>
         <div style={{ background: "rgba(18,18,42,0.85)", border: "1px solid #2a2a4a", borderRadius: 14, padding: 13, flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: 12, fontWeight: 800, color: "#9a8fc0", marginBottom: 8, flexShrink: 0 }}>📣 현장 상황</div>
@@ -196,7 +196,7 @@ export default function EventDayScreen({ state, setState, onExit }) {
 
   // ── 준비 (프리뷰) ──
   return wrap(
-    <BoothScene state={state} style={{ height: "92%", marginBottom: "3%" }} />,
+    <BoothScene state={state} keeper={state.avatar} style={{ height: "92%", marginBottom: "3%" }} />,
     <div style={{ width: 340, flexShrink: 0, display: "flex", flexDirection: "column", gap: 12, paddingBottom: 16 }}>
       <div style={{ background: "#12122a", border: "1px solid #2a2a4a", borderRadius: 16, padding: 20 }}>
         <div style={{ fontSize: 15, fontWeight: 900, color: "#ffd166", marginBottom: 6 }}>오늘은 행사 당일! 🎪</div>
