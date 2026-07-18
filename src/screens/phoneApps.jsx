@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { GOODS_TYPES, SAVE_KEY } from "../data/gameData.js";
 import { idbAll, idbDel, idbClear } from "../systems/imageSystem.js";
 import { threads } from "../systems/messageSystem.js";
-import { JOBS, PAYDAY, getJob, applyForJob, quitJob, daysToPayday } from "../systems/jobSystem.js";
+import { JOBS, PAYDAY, DOW_NAMES, getJob, applyForJob, quitJob, daysToPayday, weekdayOf, workDaysLabel, monthlyEstimate, isWorkdayToday, hasWorkedToday, shiftWage, workShift, pendingWages } from "../systems/jobSystem.js";
+import { isEventDay } from "../systems/eventSystem.js";
+import WorkGame from "../components/WorkGame.jsx";
 
 /* ============================================================
    핸드폰 전용 앱 화면들 (PhoneOS 안에서만 사용)
@@ -116,34 +118,54 @@ export function GalleryApp(){
   </div>);
 }
 
-/* ── 알바냥: 아르바이트 탐색·지원·퇴사 (근무 활동 화면은 추후) ── */
+/* ── 알바냥: 아르바이트 탐색·지원·퇴사 + 요일제 출근(미니게임) ── */
 export function JobcatApp({state,setState}){
   const [confirmQuit,setConfirmQuit]=useState(false);
+  const [working,setWorking]=useState(false);
+  const [note,setNote]=useState(null);
   const cur=getJob(state);
   const gd=state.gameDate||{month:5,day:1};
+  const eventDay=isEventDay(state);
+  const today=weekdayOf(state.day);
+  const workday=isWorkdayToday(state);
+  const worked=hasWorkedToday(state);
+  const lowSt=(state.stamina||0)<15;
+  const canWork=!!cur&&workday&&!worked&&!eventDay&&!lowSt;
+  const pending=pendingWages(state);
+  useEffect(()=>{if(!note)return;const t=setTimeout(()=>setNote(null),2800);return()=>clearTimeout(t);},[note]);
+  if(working&&cur)return <WorkGame job={cur} onCancel={()=>setWorking(false)} onDone={(mult,label)=>{const wage=shiftWage(cur,mult);setState(s=>workShift(s,mult));setWorking(false);setNote(`${label} 일당 ₩${wage.toLocaleString()} 적립! (월급날 정산)`);}}/>;
+  const reason=!cur?"":worked?"오늘 근무 완료! 수고했다냥 🐾":!workday?`오늘(${DOW_NAMES[today]})은 휴무다냥 · 근무: ${workDaysLabel(cur)}요일`:eventDay?"행사 당일은 알바 휴무다냥!":lowSt?"체력이 부족하다냥... (15 이상 필요)":"";
   return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#171208",color:"#f0e8dc",fontFamily:"'Noto Sans KR',sans-serif"}}>
     {/* 알바냥 브랜드 헤더 — 고양이 마스코트 배너 */}
     <div style={{padding:"13px 16px 11px",background:"linear-gradient(135deg,#ff9f43,#e0702e)",flexShrink:0,display:"flex",gap:"11px",alignItems:"center"}}>
       <div style={{width:"46px",height:"46px",borderRadius:"50%",background:"#fff3e0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"26px",border:"2.5px solid #fff",flexShrink:0,boxShadow:"0 3px 8px rgba(0,0,0,0.25)"}}>🐱</div>
       <div style={{flex:1,minWidth:0}}>
         <div style={{fontSize:"17px",fontWeight:"900",color:"#fff",display:"flex",alignItems:"center",gap:"6px"}}>알바냥<span style={{fontSize:"8px",background:"#fff",color:"#e0702e",borderRadius:"8px",padding:"2px 7px",fontWeight:"800"}}>동네알바 1위</span></div>
-        <div style={{fontSize:"10px",color:"#ffe4c2",marginTop:"1px"}}>{cur?"오늘도 일하는 집사, 멋지다냥!":"오늘도 좋은 알바 찾아준다냥~"}</div>
+        <div style={{fontSize:"10px",color:"#ffe4c2",marginTop:"1px"}}>{canWork?"오늘은 근무일이다냥! 출근하라냥!":cur?"오늘도 일하는 집사, 멋지다냥!":"오늘도 좋은 알바 찾아준다냥~"}</div>
       </div>
       <span style={{fontSize:"22px",flexShrink:0,opacity:0.85}}>🐾</span>
     </div>
     <div style={{flex:1,overflow:"auto",padding:"14px"}}>
+      {note&&<div style={{padding:"9px 12px",background:"#0a2a1a",border:"1px solid #06d6a0",borderRadius:"10px",marginBottom:"12px",fontSize:"11px",color:"#06d6a0",fontWeight:"700",textAlign:"center"}}>{note}</div>}
       {cur?(<div style={{padding:"14px",background:"linear-gradient(135deg,#2a1a0a,#1a0f22)",border:"1px solid #ff9f43",borderRadius:"14px",marginBottom:"14px"}}>
         <div style={{fontSize:"10px",color:"#ff9f43",fontWeight:"700",letterSpacing:"1px",marginBottom:"6px"}}>💼 재직 중</div>
         <div style={{fontSize:"15px",fontWeight:"800"}}>{cur.icon} {cur.name}</div>
-        <div style={{fontSize:"11px",color:"#888",marginTop:"4px",lineHeight:1.7}}>월급 {KRW(cur.pay)} (만근 기준) · 근무 {Math.max(0,state.day-state.job.startedDay)}일차<br/>다음 월급날: 매월 {PAYDAY}일 (D-{daysToPayday(gd)})</div>
+        {/* 근무 요일 칩 (오늘 하이라이트) */}
+        <div style={{display:"flex",gap:"4px",margin:"9px 0 7px"}}>
+          {DOW_NAMES.map((d,i)=>{const on=cur.workDays.includes(i);const isToday=i===today;
+            return <span key={d} style={{flex:1,textAlign:"center",padding:"5px 0",borderRadius:"7px",fontSize:"10px",fontWeight:"800",background:on?"#3a2410":"#1d1710",color:on?"#ffb763":"#5a4d3a",border:isToday?"1.5px solid #ffd166":"1.5px solid transparent"}}>{d}</span>;})}
+        </div>
+        <div style={{fontSize:"11px",color:"#a8987e",lineHeight:1.8}}>일당 {KRW(cur.dayWage)} (성과 ×0.5~1.4) · 체력 -{cur.staminaCost}<br/>이번 달 적립 <b style={{color:"#ffd166"}}>{KRW(pending)}</b> · 월급날 {PAYDAY}일 (D-{daysToPayday(gd)})</div>
+        <button onClick={()=>canWork&&setWorking(true)} disabled={!canWork} style={{width:"100%",marginTop:"11px",padding:"13px",borderRadius:"11px",border:"none",background:canWork?"linear-gradient(135deg,#ff9f43,#e94560)":"#241b0e",color:canWork?"#fff":"#6a5a42",fontWeight:"900",fontSize:"14px",cursor:canWork?"pointer":"not-allowed",boxShadow:canWork?"0 4px 16px rgba(255,159,67,0.4)":"none"}}>{canWork?"🕒 출근하기!":worked?"✓ 오늘 근무 완료":"🐾 오늘은 출근 못 한다냥"}</button>
+        {reason&&!canWork&&<div style={{fontSize:"10px",color:"#8a7a5e",marginTop:"6px",textAlign:"center"}}>{reason}</div>}
         {!confirmQuit
-          ?<button onClick={()=>setConfirmQuit(true)} style={{marginTop:"10px",padding:"8px 16px",background:"transparent",border:"1px solid #e94560",color:"#e94560",borderRadius:"9px",cursor:"pointer",fontSize:"12px",fontWeight:"700"}}>그만두기</button>
+          ?<button onClick={()=>setConfirmQuit(true)} style={{marginTop:"10px",padding:"7px 16px",background:"transparent",border:"1px solid #e94560",color:"#e94560",borderRadius:"9px",cursor:"pointer",fontSize:"11px",fontWeight:"700"}}>그만두기</button>
           :<div style={{display:"flex",gap:"8px",marginTop:"10px"}}>
             <button onClick={()=>setConfirmQuit(false)} style={{flex:1,padding:"8px",background:"#1a1a3a",border:"1px solid #3a3a6a",color:"#888",borderRadius:"9px",cursor:"pointer",fontSize:"12px"}}>취소</button>
-            <button onClick={()=>{setState(s=>quitJob(s));setConfirmQuit(false);}} style={{flex:1,padding:"8px",background:"#2a0a0a",border:"1px solid #e94560",color:"#e94560",borderRadius:"9px",cursor:"pointer",fontSize:"12px",fontWeight:"700"}}>정말 그만두기</button>
+            <button onClick={()=>{setState(s=>quitJob(s));setConfirmQuit(false);}} style={{flex:1,padding:"8px",background:"#2a0a0a",border:"1px solid #e94560",color:"#e94560",borderRadius:"9px",cursor:"pointer",fontSize:"12px",fontWeight:"700"}}>정말 그만두기 (적립 일당 소멸)</button>
           </div>}
       </div>):(
-      <div style={{padding:"11px 13px",background:"#241b0e",border:"1px dashed #4a3a22",borderRadius:"11px",marginBottom:"14px",fontSize:"11px",color:"#c9b699",lineHeight:1.7}}>😿 지금은 백수다냥... 아래에서 알바를 골라보라냥.<br/><span style={{color:"#8a7a5e"}}>월급은 매월 {PAYDAY}일, 근무일수만큼 은행에 입금된다냥.</span></div>)}
+      <div style={{padding:"11px 13px",background:"#241b0e",border:"1px dashed #4a3a22",borderRadius:"11px",marginBottom:"14px",fontSize:"11px",color:"#c9b699",lineHeight:1.7}}>😿 지금은 백수다냥... 아래에서 알바를 골라보라냥.<br/><span style={{color:"#8a7a5e"}}>근무 요일에 출근(미니게임)하면 일당이 적립되고, 매월 {PAYDAY}일에 입금된다냥.</span></div>)}
       <div style={{fontSize:"12px",fontWeight:"700",color:"#ffd166",marginBottom:"8px"}}>📋 모집 중인 알바</div>
       <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
         {JOBS.map(j=>{
@@ -155,14 +177,14 @@ export function JobcatApp({state,setState}){
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:"13px",fontWeight:"700"}}>{j.name}</div>
               <div style={{fontSize:"10px",color:"#666",marginTop:"2px",lineHeight:1.5}}>{j.desc}</div>
-              <div style={{fontSize:"10px",color:"#ffd166",marginTop:"3px"}}>월급 {KRW(j.pay)}{j.minFame>0&&<span style={{color:locked?"#e94560":"#06d6a0"}}> · 인지도 {j.minFame}+</span>}</div>
+              <div style={{fontSize:"10px",color:"#ffd166",marginTop:"3px"}}>일당 {KRW(j.dayWage)} · {workDaysLabel(j)}요일 · 월 약 {KRW(monthlyEstimate(j))}{j.minFame>0&&<span style={{color:locked?"#e94560":"#06d6a0"}}> · 인지도 {j.minFame}+</span>}</div>
             </div>
             {isCur?<span style={{fontSize:"11px",color:"#ff9f43",fontWeight:"700",flexShrink:0}}>재직중</span>
             :locked?<span style={{fontSize:"10px",color:"#e94560",flexShrink:0}}>🔒</span>
             :<button onClick={()=>setState(s=>applyForJob(s,j.id))} disabled={dis} style={{padding:"7px 13px",background:dis?"#1a1a2a":"linear-gradient(135deg,#ff9f43,#e94560)",border:"none",color:dis?"#555":"#fff",borderRadius:"8px",cursor:dis?"not-allowed":"pointer",fontSize:"11px",fontWeight:"700",flexShrink:0}}>지원</button>}
           </div>);})}
       </div>
-      <div style={{marginTop:"14px",fontSize:"10px",color:"#444",textAlign:"center",lineHeight:1.7}}>🚧 알바 근무(미니게임) 화면은 추후 업데이트!<br/>지금은 재직 중이면 월급날에 자동으로 입금돼요.</div>
+      <div style={{marginTop:"14px",fontSize:"10px",color:"#444",textAlign:"center",lineHeight:1.7}}>💡 근무 요일에 출근하면 미니게임 성과에 따라 일당이 ×0.5~1.4로 적립!<br/>출근 안 하면 그 날 일당은 없다냥. 행사 당일은 휴무.</div>
     </div>
   </div>);
 }
@@ -252,6 +274,7 @@ export function CalendarApp({state}){
   const sched=(state.genre&&state.genre.eventSchedule)||[];
   const appliedIds=new Set([...(state.appliedEvents||[]),...(state.activeEvent?[state.activeEvent.id]:[])]);
   const fairsOf=(abs)=>sched.filter(e=>abs>=e.startDay&&abs<=e.endDay);
+  const job=getJob(state);
   const move=(d)=>{setMOff(o=>Math.max(-3,Math.min(6,o+d)));setSelD(null);};
   const W=["일","월","화","수","목","금","토"];
   const cells=[...Array(firstW).fill(null),...Array.from({length:30},(_,i)=>i+1)];
@@ -281,12 +304,13 @@ export function CalendarApp({state}){
             <span style={{fontSize:"11px",fontWeight:isToday?"900":"700",color:w===0?"#e94560":w===6?"#4a86e8":"#e0e0ff"}}>{d}</span>
             <span style={{display:"flex",gap:"2px",height:"6px",alignItems:"center"}}>
               {fairs.length>0&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:hasApplied?"#ffd166":"#e94560"}}/>}
+              {!!job&&job.workDays.includes(w)&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:"#ff9f43"}}/>}
               {isPay&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:"#06d6a0"}}/>}
             </span>
           </button>);})}
       </div>
       <div style={{display:"flex",gap:"12px",margin:"10px 2px 12px",fontSize:"9px",color:"#666"}}>
-        <span>● <span style={{color:"#e94560"}}>행사</span></span><span>● <span style={{color:"#ffd166"}}>신청한 행사</span></span><span>● <span style={{color:"#06d6a0"}}>월급날</span></span>
+        <span>● <span style={{color:"#e94560"}}>행사</span></span><span>● <span style={{color:"#ffd166"}}>신청한 행사</span></span><span>● <span style={{color:"#ff9f43"}}>근무일</span></span><span>● <span style={{color:"#06d6a0"}}>월급날</span></span>
       </div>
       {selD!=null&&<div style={{padding:"12px",background:"#12122a",border:"1px solid #2a2a4a",borderRadius:"12px"}}>
         <div style={{fontSize:"12px",fontWeight:"800",color:"#c084fc",marginBottom:"8px"}}>{viewMonth}월 {selD}일 {selAbs===state.day?"(오늘)":selAbs>state.day?`(D-${selAbs-state.day})`:"(지남)"}</div>
