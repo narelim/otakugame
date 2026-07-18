@@ -5,6 +5,8 @@ import { threads } from "../systems/messageSystem.js";
 import { JOBS, PAYDAY, DOW_NAMES, getJob, applyForJob, quitJob, daysToPayday, weekdayOf, workDaysLabel, monthlyEstimate, isWorkdayToday, hasWorkedToday, shiftWage, workShift, pendingWages } from "../systems/jobSystem.js";
 import { isEventDay } from "../systems/eventSystem.js";
 import WorkGame from "../components/WorkGame.jsx";
+import { officialMockup, OFFICIAL_TYPES } from "../utils/officialGoods.js";
+import { collectionSets, rarityOf } from "../systems/collectionSystem.js";
 
 /* ============================================================
    핸드폰 전용 앱 화면들 (PhoneOS 안에서만 사용)
@@ -260,6 +262,64 @@ export function FactoryStatusApp({state}){
       {making.map(o=>row(o,Math.min(1,Math.max(0,(state.day-o.orderedDay)/Math.max(1,o.readyDay-o.orderedDay)))))}
       {done.length>0&&<><div style={{fontSize:"12px",fontWeight:"700",color:"#06d6a0",margin:"14px 0 8px"}}>✓ 완료된 주문</div>{done.map(o=>row(o,null))}</>}
     </div>
+  </div>);
+}
+
+/* ── 덕질장 (기본 앱): 공식 굿즈 컬렉션 북 ── */
+const RAR_ORDER={SSR:3,SR:2,R:1,N:0};
+function OfficialImg({item,style}){
+  const [url,setUrl]=useState(null);
+  const k=item&&(item.seed+":"+item.type);
+  useEffect(()=>{let a=true;if(item)officialMockup(item).then(u=>{if(a)setUrl(u);});return()=>{a=false;};},[k]); // eslint-disable-line react-hooks/exhaustive-deps
+  return url?<img src={url} alt="" draggable={false} style={style}/>:null;
+}
+export function CollectionApp({state}){
+  const [zoom,setZoom]=useState(null);
+  const col=state.collection||[];
+  const sets=collectionSets(state);
+  const uniq=col.length;
+  const doneCnt=sets.filter(s=>s.done).length;
+  const itemsFor=(set,type)=>col.filter(it=>it.char===set.char&&it.genreName===set.genreName&&it.type===type);
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif",position:"relative"}}>
+    <AppHeader icon="🎀" title="덕질장" color="#ff8fb0" sub="공식 굿즈 컬렉션 북"/>
+    <div style={{display:"flex",gap:"6px",padding:"10px 14px 0",flexShrink:0}}>
+      {[{l:"수집",v:`${uniq}종`},{l:"세트 완성",v:`${doneCnt}/${sets.length||0}`}].map(({l,v})=>
+        <div key={l} style={{flex:1,padding:"7px 4px",background:"#12122a",borderRadius:"10px",textAlign:"center",border:"1px solid #2a2a4a"}}><div style={{fontSize:"9px",color:"#666"}}>{l}</div><div style={{fontSize:"13px",fontWeight:"800",color:"#ff8fb0"}}>{v}</div></div>)}
+    </div>
+    <div style={{flex:1,overflow:"auto",padding:"12px 14px"}}>
+      {!col.length&&<Empty icon="🎀" text="아직 수집한 공식 굿즈가 없어요" sub="현생에서 '공식 굿즈 구경'을 하면 굿즈를 겟할 수 있어요 (지름신 주의)"/>}
+      {sets.map(set=>(<div key={set.key} style={{marginBottom:"16px"}}>
+        <div style={{display:"flex",alignItems:"center",gap:"7px",marginBottom:"7px"}}>
+          <span style={{fontSize:"13px",fontWeight:"800"}}>{set.char}</span>
+          <span style={{fontSize:"9px",color:"#666"}}>{set.genreName}</span>
+          {set.done
+            ?<span style={{marginLeft:"auto",fontSize:"9px",fontWeight:"800",color:"#1a1430",background:"linear-gradient(90deg,#ffd166,#ffb347)",padding:"2px 9px",borderRadius:"9px"}}>★ 세트 완성</span>
+            :<span style={{marginLeft:"auto",fontSize:"9px",color:"#888"}}>{set.have.length}/{OFFICIAL_TYPES.length}</span>}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:"6px"}}>
+          {OFFICIAL_TYPES.map(t=>{
+            const its=itemsFor(set,t.type);
+            if(!its.length)return(<div key={t.type} style={{aspectRatio:"1",background:"#101024",border:"1.5px dashed #2a2a4a",borderRadius:"10px",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:"2px"}}>
+              <span style={{fontSize:"15px",opacity:0.4}}>❓</span><span style={{fontSize:"7px",color:"#444"}}>{t.name}</span>
+            </div>);
+            const best=[...its].sort((a,b)=>(RAR_ORDER[b.rarity]||0)-(RAR_ORDER[a.rarity]||0))[0];
+            const cnt=its.reduce((s,x)=>s+(x.count||1),0);
+            const rc=rarityOf(best.rarity).color;
+            return(<button key={t.type} onClick={()=>setZoom(best)} style={{aspectRatio:"1",position:"relative",background:"#15152e",border:`1.5px solid ${rc}`,borderRadius:"10px",cursor:"pointer",padding:"6%",boxShadow:best.rarity==="SSR"?`0 0 10px ${rc}66`:"none"}}>
+              <OfficialImg item={best} style={{width:"100%",height:"100%",objectFit:"contain"}}/>
+              <span style={{position:"absolute",top:2,left:4,fontSize:"7px",fontWeight:"900",color:rc}}>{best.rarity}</span>
+              {cnt>1&&<span style={{position:"absolute",bottom:2,right:4,fontSize:"8px",color:"#888"}}>×{cnt}</span>}
+            </button>);})}
+        </div>
+      </div>))}
+      {col.length>0&&<div style={{fontSize:"10px",color:"#444",textAlign:"center",lineHeight:1.7,marginTop:"4px"}}>캐릭터별 5종을 모으면 세트 완성! (멘탈 +30)<br/>같은 굿즈는 ×스택으로 쌓여요</div>}
+    </div>
+    {zoom&&<div onClick={()=>setZoom(null)} style={{position:"absolute",inset:0,zIndex:50,background:"rgba(0,0,0,0.9)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"20px"}}>
+      <div style={{width:"72%",aspectRatio:"1",display:"flex",alignItems:"center",justifyContent:"center"}}><OfficialImg item={zoom} style={{maxWidth:"100%",maxHeight:"100%",objectFit:"contain",filter:zoom.rarity==="SSR"?"drop-shadow(0 0 18px rgba(255,209,102,0.6))":"none"}}/></div>
+      <div style={{marginTop:"12px",fontSize:"14px",fontWeight:"800"}}><span style={{color:rarityOf(zoom.rarity).color}}>[{zoom.rarity}]</span> {zoom.name}</div>
+      <div style={{fontSize:"10px",color:"#888",marginTop:"4px"}}>{zoom.genreName} 공식 · Day {zoom.day} 획득{(zoom.count||1)>1?` · ×${zoom.count}`:""}</div>
+      <button onClick={()=>setZoom(null)} style={{marginTop:"14px",padding:"9px 22px",background:"#1a1a3a",border:"1px solid #3a3a6a",color:"#aaa",borderRadius:"10px",cursor:"pointer",fontSize:"12px"}}>닫기</button>
+    </div>}
   </div>);
 }
 
