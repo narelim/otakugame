@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { DRAW_RATIOS, BLEND_MODES, MAX_LAYERS, MAX_SAVES, SAVE_KEY, TOOLS, PALETTE } from "../data/gameData.js";
 import { hexToHsl, hslToHex, makeDotPattern } from "../utils/draw.js";
+import { setDirty } from "../utils/dirtyGuard.js";
 
 function ColorPicker({color,onChange}){
   const [hsl,setHsl]=useState(()=>hexToHsl(color));
@@ -95,6 +96,8 @@ function SaveListModal({saves,onLoad,onDelete,onClose,max}){
 }
 
 export function DrawingApp({goodsType,onComplete,onCancel}){
+  // 그리는 동안 미저장 가드 — 셸이 창을 닫기 전에 확인 팝업을 띄운다
+  useEffect(()=>{setDirty("drawing",true);return()=>setDirty("drawing",false);},[]);
   const [ratioId,setRatioId]=useState("1:1");
   const csz=DRAW_RATIOS.find(r=>r.id===ratioId);
   const [tool,setTool]=useState("pen");

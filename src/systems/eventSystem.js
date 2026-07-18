@@ -3,7 +3,7 @@ import { buildVarCtx, genrePopCode } from "./genreSystem.js";
 import { applyReadyOrders } from "./goodsSystem.js";
 import { processDailyEvents, applyEventDelta, nextGameDate } from "./snsEventSystem.js";
 import { pushMessage } from "./messageSystem.js";
-import { processPayday } from "./jobSystem.js";
+import { processPayday, getJob, isWorkdayToday } from "./jobSystem.js";
 
 export function resolveEventName(type,genre){const c=buildVarCtx(genre);return (type.name||"").replace(/\{장르명\}/g,c.gname).replace(/\{cp명\}/g,c.cpName);}
 export function eventWeekendDay(day){for(let i=0;i<14;i++){const w=(day+i)%7;if(w===6)return {day:day+i,dow:"sat"};if(w===0)return {day:day+i,dow:"sun"};}return {day,dow:"sat"};}
@@ -38,7 +38,11 @@ export function endOfDay(s){
     const names=done.map(o=>{const t=GOODS_TYPES.find(x=>x.id===o.goodsType);return `${(t&&t.name)||o.goodsType} ${o.quantity}개`;}).join(", ");
     ns=pushMessage(ns,{from:"굿즈팩토리",avatar:"🏭",text:`[제작 완료] 주문하신 ${names} 제작이 끝났어요! 재고에 추가됐습니다.`});
   }
-  return processPayday(ns);
+  ns=processPayday(ns);
+  // 출근 알림: 오늘이 근무일이면 아침에 알바냥이 알려준다 (행사 당일은 휴무라 제외)
+  const j=getJob(ns);
+  if(j&&isWorkdayToday(ns)&&!isEventDay(ns))ns=pushMessage(ns,{from:"알바냥",avatar:"🐱",text:`[출근 알림] 오늘은 ${j.name} 근무일이다냥! 📱 알바냥 앱에서 출근하라냥 (일당 ₩${j.dayWage.toLocaleString()}~)`});
+  return ns;
 }
 // 하루 진행(취침/실시간 공용): 주문완료 + 날짜 + 이벤트(라인업>D-day알림>랜덤)
 export function advanceDay(s){

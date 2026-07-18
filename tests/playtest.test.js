@@ -6,6 +6,7 @@ import { performAction, sleepDay } from "../src/systems/dailySystem.js";
 import { applyForJob, workShift, isWorkdayToday, hasWorkedToday, pendingWages, shiftWage, getJob } from "../src/systems/jobSystem.js";
 import { gainOfficialGoods } from "../src/systems/collectionSystem.js";
 import { hiatusGenre, resumeGenre, closeGenre, refandomBonus, applyRefandom } from "../src/systems/endingSystem.js";
+import { myPostTemplates, canPostToday, publishMyPost } from "../src/systems/myPostSystem.js";
 import { logTx } from "../src/systems/bankSystem.js";
 import { normalizeLoaded } from "../src/systems/genreSystem.js";
 
@@ -101,6 +102,8 @@ describe("통합 플레이 시뮬레이션", () => {
     expect((s.transactions || []).some(t => t.label.includes("판매 수익"))).toBe(true);
     expect((s.stats.earn.event || 0)).toBeGreaterThan(0);
     expect((s.stats.earn.job || 0)).toBe(salarySum);
+    // 출근 알림이 근무일 아침마다 도착해야 함
+    expect(s.messages.some(m => m.text.includes("출근 알림"))).toBe(true);
     // 요약 출력 (밸런스 관찰용)
     console.log(`[70일 요약] 최종 골드 ₩${s.gold.toLocaleString()} · 행사 ${eventsDone}회(수익 ₩${(s.stats.earn.event || 0).toLocaleString()}) · 월급 ₩${salarySum.toLocaleString()} · 팔로워 ${s.followers} · 인지도 ${s.fame} · 메시지 ${s.messages.length}건`);
     // 저장 왕복
@@ -148,7 +151,7 @@ describe("덕질장 (collectionSystem)", () => {
 describe("장르 엔딩 (endingSystem)", () => {
   it("휴덕 → 복귀 감쇠 → 탈덕 회고록 → 복덕 보너스", () => {
     let s = newState();
-    s = { ...s, followers: 500, fame: 120, snsHistory: [{ id: 1, from: "@fan", text: "레전드 포스트", likes: 99 }] };
+    s = { ...s, followers: 500, fame: 120, snsHistory: [{ id: 1, from: "@fan", text: "레전드 포스트", likes: 99 }, { id: 2, from: "@me", isMine: true, text: "내가 쓴 근황", likes: 3 }] };
     // 휴덕: 작업세트가 장르에 보존되고 무장르 상태
     const h = hiatusGenre(s, "g1");
     expect(h.genre).toBe(null);
@@ -168,7 +171,9 @@ describe("장르 엔딩 (endingSystem)", () => {
     const m = c.archive[0];
     expect(m.genreName).toBe("카일×유노");
     expect(m.followers).toBe(350);
-    expect(m.highlights[0].text).toBe("레전드 포스트");
+    expect(m.highlights[0].text).toBe("내가 쓴 근황"); // 내 포스트가 ♥ 수와 무관하게 우선
+    expect(m.highlights[0].mine).toBe(true);
+    expect(m.highlights[1].text).toBe("레전드 포스트");
     expect(m.reason).toBe("done");
     expect(c.mentalHealth).toBe(Math.min(100, beforeMental + 10));
     expect(c.messages.some(x => x.text.includes("계정 정리"))).toBe(true);
@@ -191,6 +196,23 @@ describe("장르 엔딩 (endingSystem)", () => {
     }
     expect(seen).toBeGreaterThan(0);
     console.log(`[엔딩] 옛 장르 소식 300일 중 ${seen}회 등장 (기대 ~15회)`);
+  });
+});
+
+describe("내 포스트 (myPostSystem)", () => {
+  it("상황별 템플릿 노출·발행 보상·하루 1회 제한", () => {
+    let s = newState();
+    s = { ...s, activeEvent: s.genre.eventSchedule[0], goods: [{ id: 1, type: "postcard", name: "엽서", baseImage: "img", imageData: "img", price: 1500, stock: 10 }], wardrobe: ["hoodie", "sailor"], collection: [{ name: "카일 하트 캔뱃지" }] };
+    const tpls = myPostTemplates(s);
+    expect(tpls.map(t => t.id)).toEqual(expect.arrayContaining(["wip", "promo", "ootd", "haul"]));
+    expect(tpls.find(t => t.id === "promo").imageUrl).toBe("img"); // 행사 홍보엔 대표 굿즈 이미지
+    expect(canPostToday(s)).toBe(true);
+    const before = s.followers;
+    s = publishMyPost(s, tpls[0]);
+    expect(s.snsHistory[0].isMine).toBe(true);
+    expect(s.followers).toBeGreaterThan(before);
+    expect(s.flags.recentPost).toBe(true);
+    expect(canPostToday(s)).toBe(false); // 하루 1회
   });
 });
 

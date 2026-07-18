@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { putBlob, getBlob, delBlob } from "../systems/assetStore.js";
-import { nearestUpcomingEvent, isEventDay } from "../systems/eventSystem.js";
+import { nearestUpcomingEvent, isEventDay, advanceDay } from "../systems/eventSystem.js";
+import { isDirty } from "../utils/dirtyGuard.js";
 import { resolveChoice, applyEventDelta } from "../systems/snsEventSystem.js";
 import EventModal from "../components/EventModal.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
@@ -73,6 +74,7 @@ function AppTile({ app, x, y, onOpen }) {
 
 const TASKBAR_H = 64;
 const PHONE_W = 390, PHONE_H = 840;
+const DAY_MS = 360000; // 현실 6분 = 게임 1일 (여유롭지만 흐르는 시간)
 
 // 앱별 실제 화면 연결. 없으면 "준비중" 플레이스홀더.
 function appContent(id, state, setState) {
@@ -132,15 +134,37 @@ export default function DesktopShell({ state, setState }) {
   // 실시간 시계
   useEffect(() => { const t = setInterval(() => setClock(new Date()), 1000); return () => clearInterval(t); }, []);
 
+  // 창 닫기 (그리던 그림이 있으면 확인)
+  const closeApp = useCallback(() => {
+    if (isDirty("drawing") && !window.confirm("🎨 저장하지 않은 그림이 있어요!\n창을 닫으면 그리던 그림이 사라집니다. 정말 닫을까요?")) return;
+    setOpenApp(null);
+  }, []);
+
+  // 하루 자동 진행: 현실 6분 = 1일. 행사 당일·선택지 대기 중엔 멈춰서 기다린다.
+  const [dayProg, setDayProg] = useState(0);
+  const dayT0 = useRef(null);
+  useEffect(() => { dayT0.current = Date.now(); }, [state.day]); // 날짜가 바뀌면(취침·행사 포함) 타이머 리셋 — 진행바는 다음 틱에 갱신
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (dayT0.current == null) dayT0.current = Date.now();
+      const el = Date.now() - dayT0.current;
+      setDayProg(Math.min(1, el / DAY_MS));
+      if (el >= DAY_MS) {
+        setState(s => { if (isEventDay(s)) return s; if (s.pendingSnsEvent && s.pendingSnsEvent.needsChoice) return s; return advanceDay({ ...s, pendingSnsEvent: null }); });
+      }
+    }, 1000);
+    return () => clearInterval(t);
+  }, [setState]);
+
   // Tab = 상태보드 토글 (PC). 모바일은 이식 시 핸들 버튼 추가.
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Tab") { e.preventDefault(); setStatusOpen(v => !v); }
-      if (e.key === "Escape") { setOpenApp(null); setPowerMenu(false); setPhoneOpen(false); }
+      if (e.key === "Escape") { closeApp(); setPowerMenu(false); setPhoneOpen(false); }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [closeApp]);
 
   const pickWallpaper = useCallback((e) => {
     const f = e.target.files && e.target.files[0];
@@ -188,14 +212,14 @@ export default function DesktopShell({ state, setState }) {
       </div>
 
       {/* 앱 창 (전체화면) — 작업표시줄 위쪽 영역을 덮음 */}
-      <AppWindow app={openAppObj} onClose={() => setOpenApp(null)} state={state} setState={setState} />
+      <AppWindow app={openAppObj} onClose={closeApp} state={state} setState={setState} />
       <input ref={fileRef} type="file" accept="image/*" onChange={pickWallpaper} style={{ display: "none" }} />
 
       {/* 하단 리본 = 데스크톱 작업표시줄 (데스크톱·앱 위에 항상 유지) */}
       <div style={{ position: "absolute", left: 0, top: STAGE_H - TASKBAR_H, width: STAGE_W, height: TASKBAR_H, background: "rgba(8,8,18,0.92)", backdropFilter: "blur(10px)", borderTop: "1px solid #2a2a4a", display: "flex", alignItems: "center", padding: "0 20px", gap: 14, zIndex: 50 }}>
         {/* 좌: 전원 */}
         <button onClick={() => setPowerMenu(true)} title="컴퓨터 끄기" style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(233,69,96,0.15)", border: "1px solid #e94560", color: "#e94560", fontSize: 22, cursor: "pointer", flexShrink: 0 }}>⏻</button>
-        {openApp && <button onClick={() => setOpenApp(null)} title="바탕화면 보기" style={{ height: 40, padding: "0 14px", borderRadius: 10, background: "rgba(124,58,237,0.18)", border: "1px solid #7c3aed", color: "#c084fc", fontSize: 13, cursor: "pointer", fontWeight: 700, flexShrink: 0 }}>🖥 바탕화면</button>}
+        {openApp && <button onClick={closeApp} title="바탕화면 보기" style={{ height: 40, padding: "0 14px", borderRadius: 10, background: "rgba(124,58,237,0.18)", border: "1px solid #7c3aed", color: "#c084fc", fontSize: 13, cursor: "pointer", fontWeight: 700, flexShrink: 0 }}>🖥 바탕화면</button>}
         <div style={{ width: 1, height: 30, background: "#2a2a4a", flexShrink: 0 }} />
         {/* 중앙: 앱 바로가기 (핀 고정 느낌) */}
         <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
@@ -210,6 +234,13 @@ export default function DesktopShell({ state, setState }) {
         <button onClick={() => setPhoneOpen(v => !v)} title="핸드폰" style={{ position: "relative", width: 44, height: 44, borderRadius: 12, background: "linear-gradient(145deg,#7c3aed,#e94560)", border: "none", color: "#fff", fontSize: 22, cursor: "pointer", flexShrink: 0, boxShadow: "0 4px 14px rgba(124,58,237,0.5)" }}>📱
           {unread > 0 && <span style={{ position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, background: "#e94560", color: "#fff", fontSize: 10, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 5px", border: "2px solid #08081a" }}>{unread > 99 ? "99+" : unread}</span>}
         </button>
+        {/* 하루 진행 표시 (현실 6분 = 1일, 행사날엔 정지) */}
+        <div title={eventDay ? "행사 당일 — 시간이 멈춰있어요. 행사를 치르면 하루가 넘어가요" : "하루가 흘러가는 중 (현실 6분 = 1일, 취침으로 바로 넘길 수도 있어요)"} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3, flexShrink: 0 }}>
+          <span style={{ fontSize: 12, lineHeight: 1 }}>{eventDay ? "🎪" : dayProg < 0.33 ? "🌅" : dayProg < 0.66 ? "☀️" : "🌙"}</span>
+          <div style={{ width: 48, height: 4, background: "#1a1a30", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: eventDay ? "100%" : `${dayProg * 100}%`, background: eventDay ? "#e94560" : "linear-gradient(90deg,#ffd166,#e94560)", transition: "width 1s linear" }} />
+          </div>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", color: "#c7c0e0", flexShrink: 0, minWidth: 110 }}>
           <span style={{ fontSize: 15, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>{hhmm}</span>
           <span style={{ fontSize: 11, color: "#666" }}>{dateLabel}</span>

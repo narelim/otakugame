@@ -30,7 +30,8 @@ function activate(s, genres, target) {
 export function buildMemoir(s, g, reason) {
   const createdDay = g.createdDay || 1;
   const evs = (s.eventHistory || []).filter(e => e.day >= createdDay && e.day <= s.day);
-  const highlights = [...(g.snsHistory || [])].filter(p => p.text).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 3).map(p => ({ from: p.from, text: p.text, likes: p.likes || 0 }));
+  // 하이라이트: 내가 쓴 포스트 우선, 그다음 ♥ 순
+  const highlights = [...(g.snsHistory || [])].filter(p => p.text).sort((a, b) => ((b.isMine ? 1 : 0) - (a.isMine ? 1 : 0)) || ((b.likes || 0) - (a.likes || 0))).slice(0, 3).map(p => ({ from: p.from, text: p.text, likes: p.likes || 0, mine: !!p.isMine }));
   return {
     id: "mem_" + g.id, genreId: g.id, genreName: g.name, media: [g.media, g.mediaGenre, g.type].filter(Boolean).join(" · "),
     createdDay, closedDay: s.day, days: Math.max(1, s.day - createdDay + 1),

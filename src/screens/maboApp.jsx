@@ -3,6 +3,7 @@ import { FAN_ACCOUNTS } from "../data/gameData.js";
 import { prefetchImages, popFromPool, fanPostText, idbAll, idbPut, idbDel } from "../systems/imageSystem.js";
 import { pickOne, getRoster, rosterEligible, npcPostText, makeTimelineUpdate } from "../systems/tweetSystem.js";
 import { switchActiveGenre } from "../systems/genreSystem.js";
+import { myPostTemplates, canPostToday, publishMyPost } from "../systems/myPostSystem.js";
 import { ProfileScreen } from "./gameScreens.jsx";
 
 /* ============================================================
@@ -120,6 +121,7 @@ export default function MaboApp({state,setState,view,push}){
   const [banner,setBanner]=useState(null);
   const [bmarked,setBmarked]=useState({});
   const [feedTab,setFeedTab]=useState("all");
+  const [compose,setCompose]=useState(null); // 포스트 템플릿 목록 (열려있으면 배열)
   const {genre,profile}=state;
   const genresArr=state.genres||[];
   const multiG=genresArr.length>1;
@@ -154,7 +156,7 @@ export default function MaboApp({state,setState,view,push}){
   };
   const saveBookmark=async(post)=>{await idbPut("bookmarks",{id:String(post.id),imageUrl:post.imageUrl,from:post.from,avatar:post.avatar,text:post.text,savedAt:Date.now()});setBmarked(b=>({...b,[post.id]:true}));};
 
-  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0b1220",color:"#e0e8f5",fontFamily:"'Noto Sans KR',sans-serif"}}>
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0b1220",color:"#e0e8f5",fontFamily:"'Noto Sans KR',sans-serif",position:"relative"}}>
     <MaboHeader state={state} onAvatar={()=>push({app:"mabo",view:"me"})}/>
     {/* 다 확인 / 새 소식 바 */}
     <button onClick={refresh} disabled={loading} style={{padding:"9px 14px",background:banner&&banner.type==="new"?"#07231a":"#0e1a2e",border:"none",borderBottom:"1px solid #14202f",color:loading?"#3d5372":banner&&banner.type==="new"?"#06d6a0":AC,cursor:loading?"wait":"pointer",fontSize:"12px",fontWeight:"700",flexShrink:0,textAlign:"center"}}>
@@ -170,5 +172,24 @@ export default function MaboApp({state,setState,view,push}){
       {(state.followers||0)===0&&feed.length===0&&<div style={{textAlign:"center",padding:"46px 20px",color:"#3d5372"}}><div style={{fontSize:"32px",marginBottom:"8px"}}>🦗</div><div style={{fontSize:"13px"}}>아직 조용하네요...</div><div style={{fontSize:"11px",marginTop:"4px",color:"#2a3a52"}}>위의 바를 탭해 새 소식을 확인해보세요</div></div>}
       {feed.map(post=><PostCard key={post.id} post={post} profile={profile} multiG={multiG} showGenreTag={feedTab==="all"} onBookmark={saveBookmark} bookmarked={!!bmarked[post.id]}/>)}
     </div>
+    {/* ✍️ 내 포스트 작성 (하루 1회, 템플릿 선택) */}
+    <button onClick={()=>canPostToday(state)&&setCompose(myPostTemplates(state))} disabled={!canPostToday(state)} title={canPostToday(state)?"포스트 쓰기":"오늘은 이미 올렸어요 (하루 1회)"}
+      style={{position:"absolute",right:14,bottom:14,width:46,height:46,borderRadius:"50%",border:"none",background:canPostToday(state)?`linear-gradient(145deg,${AC},#7c3aed)`:"#152238",color:canPostToday(state)?"#fff":"#3d5372",fontSize:18,cursor:canPostToday(state)?"pointer":"not-allowed",boxShadow:canPostToday(state)?"0 4px 14px rgba(76,201,240,0.4)":"none",zIndex:20}}>✍️</button>
+    {compose&&<div onClick={()=>setCompose(null)} style={{position:"absolute",inset:0,zIndex:30,background:"rgba(5,8,18,0.7)",display:"flex",alignItems:"flex-end"}}>
+      <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"#0e1a2e",borderTop:`1px solid ${AC}44`,borderRadius:"16px 16px 0 0",padding:"16px 14px 18px",maxHeight:"70%",overflow:"auto"}}>
+        <div style={{fontSize:13,fontWeight:800,color:AC,marginBottom:4}}>✍️ 무슨 이야기를 올릴까?</div>
+        <div style={{fontSize:10,color:"#6b7f9e",marginBottom:12}}>지금 상황에 맞는 포스트만 올릴 수 있어요 · 하루 1회</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {compose.map(tpl=>(<button key={tpl.id} onClick={()=>{setState(s=>publishMyPost(s,tpl));setCompose(null);setBanner({type:"new",n:1});}} style={{display:"flex",gap:10,alignItems:"flex-start",padding:"11px 12px",borderRadius:12,border:"1px solid #1c2c44",background:"#101d33",color:"#e0e8f5",cursor:"pointer",textAlign:"left"}}>
+            <span style={{fontSize:18,flexShrink:0}}>{tpl.icon}</span>
+            <span style={{minWidth:0}}>
+              <span style={{display:"block",fontSize:12,fontWeight:800,color:AC}}>{tpl.label}{tpl.imageUrl?" 🖼":""}</span>
+              <span style={{display:"block",fontSize:12,color:"#cfdaeb",marginTop:3,lineHeight:1.6}}>{tpl.text}</span>
+            </span>
+          </button>))}
+        </div>
+        <button onClick={()=>setCompose(null)} style={{width:"100%",marginTop:10,padding:9,borderRadius:10,border:"1px solid #1c2c44",background:"transparent",color:"#6b7f9e",fontSize:12,cursor:"pointer"}}>안 올릴래</button>
+      </div>
+    </div>}
   </div>);
 }

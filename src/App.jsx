@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { INITIAL_STATE } from "./data/gameData.js";
 import { normalizeLoaded } from "./systems/genreSystem.js";
-import { isEventDay, advanceDay } from "./systems/eventSystem.js";
 import { prefetchImages } from "./systems/imageSystem.js";
 import EventModal from "./components/EventModal.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
@@ -24,8 +23,7 @@ export default function App(){
     const t=setTimeout(()=>{writeSave(state);},800);
     return ()=>clearTimeout(t);
   },[state]);
-  // 실시간 경과: 현실 10분 = 게임 1일 (행사 당일·타이틀·모달 중엔 멈춤)
-  useEffect(()=>{const t=setInterval(()=>{setState(s=>{if(s.screen==="title"||isEventDay(s)||s.pendingSnsEvent)return s;return advanceDay(s);});},600000);return()=>clearInterval(t);},[]);
+  // 하루 자동 진행은 DesktopShell의 데이 타이머(현실 6분=1일)가 담당. 레거시 #mobile은 취침 버튼으로만 진행.
   // 라우트: 기본 = 가로 데스크톱. #mobile = 레거시 세로 탭 게임(같은 state 공유).
   const [hash,setHash]=useState(()=>typeof window!=="undefined"?window.location.hash:"");
   useEffect(()=>{const f=()=>setHash(window.location.hash);window.addEventListener("hashchange",f);return()=>window.removeEventListener("hashchange",f);},[]);
