@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { GOODS_TYPES } from "../data/gameData.js";
+import { useState, useEffect } from "react";
+import { GOODS_TYPES, SAVE_KEY } from "../data/gameData.js";
+import { idbAll, idbDel, idbClear } from "../systems/imageSystem.js";
 import { threads } from "../systems/messageSystem.js";
 import { JOBS, PAYDAY, getJob, applyForJob, quitJob, daysToPayday } from "../systems/jobSystem.js";
 
 /* ============================================================
    핸드폰 전용 앱 화면들 (PhoneOS 안에서만 사용)
-   메시지 · 알바냥 · 은행 · 굿즈팩토리(진행현황) · 캘린더
+   - 기본 앱 (메시지·갤러리·캘린더): AppHeader 공용 — 순정 앱 느낌 통일
+   - 서드파티 앱 (알바냥·은행·굿즈팩토리): 각자 브랜드 디자인
    ============================================================ */
 
 const KRW=(n)=>"₩"+(n||0).toLocaleString();
@@ -62,13 +64,73 @@ export function MessagesApp({state,view,push,markRead}){
   </div>);
 }
 
+/* ── 갤러리 (기본 앱): 내 그림 + 북마크 이미지 ── */
+export function GalleryApp(){
+  const [tab,setTab]=useState("art");
+  const [items,setItems]=useState(()=>{try{const raw=localStorage.getItem(SAVE_KEY);return raw?JSON.parse(raw):[];}catch{return [];}});
+  const [bmarks,setBmarks]=useState([]);
+  const [zoom,setZoom]=useState(null);
+  const [confirmClear,setConfirmClear]=useState(false);
+  const loadBm=()=>{idbAll("bookmarks").then(b=>setBmarks((b||[]).sort((a,b2)=>b2.savedAt-a.savedAt)));};
+  useEffect(()=>{loadBm();},[]);
+  const delArt=(id)=>{const next=items.filter(s=>s.id!==id);try{localStorage.setItem(SAVE_KEY,JSON.stringify(next));}catch{/* noop */}setItems(next);if(zoom&&zoom.id===id)setZoom(null);};
+  const delBm=(id)=>{idbDel("bookmarks",id).then(loadBm);if(zoom&&zoom.id===id)setZoom(null);};
+  const clearCache=()=>{Promise.all([idbClear("imagePool"),idbClear("bookmarks")]).then(()=>{loadBm();setConfirmClear(false);});};
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif",position:"relative"}}>
+    <AppHeader icon="🖼" title="갤러리" color="#ffd166" sub="내 그림 · 북마크 이미지"/>
+    {/* 세그먼트 탭 — 순정 앱 톤 */}
+    <div style={{display:"flex",gap:"4px",margin:"10px 14px",padding:"3px",background:"#12122a",borderRadius:"11px",flexShrink:0}}>
+      {[{id:"art",t:`🎨 내 그림 (${items.length})`},{id:"fan",t:`🔖 북마크 (${bmarks.length})`}].map(o=>
+        <button key={o.id} onClick={()=>setTab(o.id)} style={{flex:1,padding:"8px 4px",background:tab===o.id?"#2a2a4a":"transparent",border:"none",borderRadius:"9px",color:tab===o.id?"#ffd166":"#666",cursor:"pointer",fontSize:"11px",fontWeight:"700"}}>{o.t}</button>)}
+    </div>
+    <div style={{flex:1,overflow:"auto",padding:"0 14px 14px"}}>
+      {tab==="art"?<>
+        {!items.length&&<Empty icon="🖼" text="저장된 그림이 없어요" sub="스튜디오에서 그림을 그려 저장하세요"/>}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:"7px"}}>
+          {items.map(s=>(<button key={s.id} onClick={()=>setZoom({id:s.id,url:s.thumb,name:s.name,sub:`${s.ts||""} · ${s.ratioId} · 레이어 ${(s.layers||[]).length}`,kind:"art"})} style={{padding:0,background:"#fff",borderRadius:"11px",border:"1px solid #2a2a4a",overflow:"hidden",cursor:"pointer"}}>
+            <img src={s.thumb} style={{width:"100%",aspectRatio:"1",objectFit:"contain",display:"block"}}/>
+          </button>))}
+        </div>
+      </>:<>
+        {!bmarks.length&&<Empty icon="🔖" text="북마크한 이미지가 없어요" sub="mabo 이미지 포스트에서 🔖를 눌러 저장하세요"/>}
+        <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:"7px"}}>
+          {bmarks.map(b=>(<button key={b.id} onClick={()=>setZoom({id:b.id,url:b.imageUrl,name:b.from,sub:b.text,kind:"bm"})} style={{padding:0,background:"#12122a",borderRadius:"11px",border:"1px solid #2a2a4a",overflow:"hidden",cursor:"pointer"}}>
+            <img src={b.imageUrl} style={{width:"100%",aspectRatio:"1",objectFit:"cover",display:"block"}}/>
+          </button>))}
+        </div>
+        {bmarks.length>0&&<div style={{marginTop:"18px",paddingTop:"12px",borderTop:"1px solid #1a1a30"}}>
+          {!confirmClear?<button onClick={()=>setConfirmClear(true)} style={{width:"100%",padding:"10px",background:"transparent",border:"1px solid #2a2a4a",color:"#555",borderRadius:"10px",cursor:"pointer",fontSize:"11px"}}>🗑 이미지 캐시 전체 삭제</button>
+          :<div style={{display:"flex",gap:"8px"}}><button onClick={()=>setConfirmClear(false)} style={{flex:1,padding:"10px",background:"#1a1a3a",border:"1px solid #3a3a6a",color:"#888",borderRadius:"10px",cursor:"pointer",fontSize:"11px"}}>취소</button><button onClick={clearCache} style={{flex:1,padding:"10px",background:"#2a0a0a",border:"1px solid #e94560",color:"#e94560",borderRadius:"10px",cursor:"pointer",fontSize:"11px",fontWeight:"700"}}>정말 삭제</button></div>}
+        </div>}
+      </>}
+    </div>
+    {zoom&&<div onClick={()=>setZoom(null)} style={{position:"absolute",inset:0,zIndex:50,background:"rgba(0,0,0,0.9)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"18px"}}>
+      <img src={zoom.url} style={{maxWidth:"100%",maxHeight:"64%",objectFit:"contain",background:zoom.kind==="art"?"#fff":"transparent",borderRadius:"10px",boxShadow:"0 8px 40px rgba(255,209,102,0.25)"}}/>
+      <div style={{marginTop:"12px",fontSize:"13px",fontWeight:"700"}}>{zoom.name}</div>
+      <div style={{fontSize:"10px",color:"#888",marginTop:"3px",maxWidth:"90%",textAlign:"center"}}>{zoom.sub}</div>
+      <div style={{display:"flex",gap:"10px",marginTop:"14px"}}>
+        <button onClick={e=>{e.stopPropagation();setZoom(null);}} style={{padding:"9px 20px",background:"#1a1a3a",border:"1px solid #3a3a6a",color:"#aaa",borderRadius:"10px",cursor:"pointer",fontSize:"12px"}}>닫기</button>
+        <button onClick={e=>{e.stopPropagation();zoom.kind==="art"?delArt(zoom.id):delBm(zoom.id);}} style={{padding:"9px 20px",background:"#2a0a0a",border:"1px solid #e94560",color:"#e94560",borderRadius:"10px",cursor:"pointer",fontSize:"12px"}}>🗑 삭제</button>
+      </div>
+    </div>}
+  </div>);
+}
+
 /* ── 알바냥: 아르바이트 탐색·지원·퇴사 (근무 활동 화면은 추후) ── */
 export function JobcatApp({state,setState}){
   const [confirmQuit,setConfirmQuit]=useState(false);
   const cur=getJob(state);
   const gd=state.gameDate||{month:5,day:1};
-  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif"}}>
-    <AppHeader icon="🐱" title="알바냥" color="#ff9f43" sub="동네 알바 찾기는 알바냥이 최고다냥!"/>
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#171208",color:"#f0e8dc",fontFamily:"'Noto Sans KR',sans-serif"}}>
+    {/* 알바냥 브랜드 헤더 — 고양이 마스코트 배너 */}
+    <div style={{padding:"13px 16px 11px",background:"linear-gradient(135deg,#ff9f43,#e0702e)",flexShrink:0,display:"flex",gap:"11px",alignItems:"center"}}>
+      <div style={{width:"46px",height:"46px",borderRadius:"50%",background:"#fff3e0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:"26px",border:"2.5px solid #fff",flexShrink:0,boxShadow:"0 3px 8px rgba(0,0,0,0.25)"}}>🐱</div>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{fontSize:"17px",fontWeight:"900",color:"#fff",display:"flex",alignItems:"center",gap:"6px"}}>알바냥<span style={{fontSize:"8px",background:"#fff",color:"#e0702e",borderRadius:"8px",padding:"2px 7px",fontWeight:"800"}}>동네알바 1위</span></div>
+        <div style={{fontSize:"10px",color:"#ffe4c2",marginTop:"1px"}}>{cur?"오늘도 일하는 집사, 멋지다냥!":"오늘도 좋은 알바 찾아준다냥~"}</div>
+      </div>
+      <span style={{fontSize:"22px",flexShrink:0,opacity:0.85}}>🐾</span>
+    </div>
     <div style={{flex:1,overflow:"auto",padding:"14px"}}>
       {cur?(<div style={{padding:"14px",background:"linear-gradient(135deg,#2a1a0a,#1a0f22)",border:"1px solid #ff9f43",borderRadius:"14px",marginBottom:"14px"}}>
         <div style={{fontSize:"10px",color:"#ff9f43",fontWeight:"700",letterSpacing:"1px",marginBottom:"6px"}}>💼 재직 중</div>
@@ -81,14 +143,14 @@ export function JobcatApp({state,setState}){
             <button onClick={()=>{setState(s=>quitJob(s));setConfirmQuit(false);}} style={{flex:1,padding:"8px",background:"#2a0a0a",border:"1px solid #e94560",color:"#e94560",borderRadius:"9px",cursor:"pointer",fontSize:"12px",fontWeight:"700"}}>정말 그만두기</button>
           </div>}
       </div>):(
-      <div style={{padding:"11px 13px",background:"#12122a",border:"1px solid #2a2a4a",borderRadius:"11px",marginBottom:"14px",fontSize:"11px",color:"#888",lineHeight:1.7}}>😿 지금은 백수다냥... 아래에서 알바를 골라보라냥.<br/><span style={{color:"#555"}}>월급은 매월 {PAYDAY}일, 근무일수만큼 은행에 입금된다냥.</span></div>)}
+      <div style={{padding:"11px 13px",background:"#241b0e",border:"1px dashed #4a3a22",borderRadius:"11px",marginBottom:"14px",fontSize:"11px",color:"#c9b699",lineHeight:1.7}}>😿 지금은 백수다냥... 아래에서 알바를 골라보라냥.<br/><span style={{color:"#8a7a5e"}}>월급은 매월 {PAYDAY}일, 근무일수만큼 은행에 입금된다냥.</span></div>)}
       <div style={{fontSize:"12px",fontWeight:"700",color:"#ffd166",marginBottom:"8px"}}>📋 모집 중인 알바</div>
       <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
         {JOBS.map(j=>{
           const locked=(state.fame||0)<j.minFame;
           const isCur=cur&&cur.id===j.id;
           const dis=locked||!!cur;
-          return(<div key={j.id} style={{display:"flex",gap:"11px",alignItems:"center",padding:"12px 13px",background:isCur?"#1a1408":"#12122a",border:`1px solid ${isCur?"#ff9f43":"#2a2a4a"}`,borderRadius:"12px",opacity:locked?0.55:1}}>
+          return(<div key={j.id} style={{display:"flex",gap:"11px",alignItems:"center",padding:"12px 13px",background:isCur?"#2b1d0c":"#211a10",border:`1px solid ${isCur?"#ff9f43":"#3a2f1e"}`,borderRadius:"12px",opacity:locked?0.55:1}}>
             <div style={{fontSize:"24px",flexShrink:0}}>{j.icon}</div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontSize:"13px",fontWeight:"700"}}>{j.name}</div>
@@ -110,17 +172,25 @@ export function BankApp({state}){
   const txs=state.transactions||[];
   const job=getJob(state);
   const gd=state.gameDate||{month:5,day:1};
-  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif"}}>
-    <AppHeader icon="🏦" title="모모뱅크" color="#4a86e8" sub="내 계좌 · 거래내역"/>
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0a0f1e",color:"#e2e8f6",fontFamily:"'Noto Sans KR',sans-serif"}}>
+    {/* 모모뱅크 브랜드 헤더 — 핀테크 톤 */}
+    <div style={{padding:"14px 16px",background:"#0b1530",borderBottom:"1px solid #1c2b55",flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
+        <span style={{width:"26px",height:"26px",borderRadius:"8px",background:"linear-gradient(135deg,#5b8cff,#2d5bff)",display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:"14px",fontWeight:"900",color:"#fff"}}>M</span>
+        <span style={{fontSize:"15px",fontWeight:"900",color:"#fff",letterSpacing:"0.5px"}}>모모<span style={{color:"#5b8cff"}}>뱅크</span></span>
+      </div>
+      <span style={{fontSize:"9px",color:"#5b8cff",border:"1px solid #24397a",borderRadius:"10px",padding:"3px 9px",fontWeight:"700"}}>🔔 입출금 알림 ON</span>
+    </div>
     <div style={{flex:1,overflow:"auto"}}>
-      <div style={{margin:"14px",padding:"16px",background:"linear-gradient(135deg,#0f1a3a,#141232)",border:"1px solid #4a86e8",borderRadius:"16px"}}>
-        <div style={{fontSize:"10px",color:"#7a9ae0",letterSpacing:"1px"}}>입출금 통장</div>
-        <div style={{fontSize:"26px",fontWeight:"900",color:"#fff",marginTop:"4px"}}>{KRW(state.gold)}</div>
-        {job&&<div style={{fontSize:"10px",color:"#7a9ae0",marginTop:"6px"}}>💼 {job.name} 급여일: 매월 {PAYDAY}일 (D-{daysToPayday(gd)})</div>}
+      <div style={{margin:"14px",padding:"17px",background:"linear-gradient(135deg,#16296a,#0e1c48)",border:"1px solid #2a4390",borderRadius:"18px",boxShadow:"0 8px 24px rgba(45,91,255,0.18)",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",right:"-24px",top:"-24px",width:"110px",height:"110px",borderRadius:"50%",background:"radial-gradient(circle,#5b8cff22,transparent)",pointerEvents:"none"}}/>
+        <div style={{fontSize:"10px",color:"#8aa6f0",letterSpacing:"1px"}}>입출금 통장 <span style={{color:"#3d5aa8"}}>1002-{String((state.day||1)%1000).padStart(3,"0")}-서코</span></div>
+        <div style={{fontSize:"27px",fontWeight:"900",color:"#fff",marginTop:"5px",fontVariantNumeric:"tabular-nums"}}>{KRW(state.gold)}</div>
+        {job&&<div style={{fontSize:"10px",color:"#8aa6f0",marginTop:"7px"}}>💼 {job.name} 급여일: 매월 {PAYDAY}일 (D-{daysToPayday(gd)})</div>}
       </div>
       <div style={{padding:"0 14px 6px",fontSize:"12px",fontWeight:"700",color:"#ffd166"}}>거래내역 {txs.length?`(${txs.length})`:""}</div>
       {!txs.length&&<Empty icon="🧾" text="거래 내역이 없어요" sub="굿즈 주문·행사 수익·월급이 여기에 기록돼요"/>}
-      {txs.map(tx=>(<div key={tx.id} style={{display:"flex",gap:"10px",alignItems:"center",padding:"10px 16px",borderBottom:"1px solid #16162e"}}>
+      {txs.map(tx=>(<div key={tx.id} style={{display:"flex",gap:"10px",alignItems:"center",padding:"10px 16px",borderBottom:"1px solid #101a36"}}>
         <div style={{fontSize:"18px",flexShrink:0}}>{tx.icon}</div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:"12px",fontWeight:"700",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tx.label}</div>
@@ -141,7 +211,7 @@ export function FactoryStatusApp({state}){
   const making=orders.filter(o=>o.status==="making");
   const done=orders.filter(o=>o.status!=="making").slice(0,12);
   const row=(o,prog)=>{const t=GOODS_TYPES.find(x=>x.id===o.goodsType);const dleft=o.readyDay-state.day;
-    return(<div key={o.id} style={{padding:"11px 12px",background:"#12122a",border:"1px solid #2a2a4a",borderRadius:"12px",marginBottom:"8px"}}>
+    return(<div key={o.id} style={{padding:"11px 12px",background:"#1c1710",border:"1px solid #3a2f1e",borderRadius:"12px",marginBottom:"8px"}}>
       <div style={{display:"flex",gap:"10px",alignItems:"center"}}>
         <img src={o.artworkSnapshot} style={{width:"38px",height:"38px",objectFit:"contain",background:"#fff",borderRadius:"7px",flexShrink:0}}/>
         <div style={{flex:1,minWidth:0}}>
@@ -150,12 +220,19 @@ export function FactoryStatusApp({state}){
         </div>
         <div style={{fontSize:"12px",fontWeight:"900",color:prog!=null?(dleft<=0?"#06d6a0":"#ffd166"):"#06d6a0",flexShrink:0}}>{prog!=null?(dleft<=0?"완성!":`D-${dleft}`):"✓ 완료"}</div>
       </div>
-      {prog!=null&&<div style={{marginTop:"8px",height:"5px",background:"#1a1a3a",borderRadius:"3px",overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(prog*100)}%`,background:"linear-gradient(90deg,#ff9f43,#e94560)",borderRadius:"3px",transition:"width .4s"}}/></div>}
+      {prog!=null&&<div style={{marginTop:"8px",height:"6px",background:"#0d0b07",borderRadius:"3px",overflow:"hidden",border:"1px solid #2a2114"}}><div style={{height:"100%",width:`${Math.round(prog*100)}%`,background:"repeating-linear-gradient(45deg,#ffb347 0 6px,#e0702e 6px 12px)",borderRadius:"3px",transition:"width .4s"}}/></div>}
     </div>);};
-  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif"}}>
-    <AppHeader icon="🏭" title="굿즈팩토리" color="#ff9f43" sub="주문 진행현황 확인"/>
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#12100c",color:"#ece5da",fontFamily:"'Noto Sans KR',sans-serif"}}>
+    {/* 굿즈팩토리 브랜드 헤더 — 공장/인더스트리얼 톤 */}
+    <div style={{flexShrink:0}}>
+      <div style={{padding:"13px 16px",background:"#1a1408",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{fontSize:"15px",fontWeight:"900",color:"#ffb347",letterSpacing:"-0.3px"}}>🏭 GOODS<span style={{color:"#fff"}}>FACTORY</span></div>
+        <span style={{fontSize:"9px",color:"#8a7a5e",border:"1px solid #3a2f1e",borderRadius:"4px",padding:"3px 8px",fontFamily:"monospace"}}>제작 라인 모니터</span>
+      </div>
+      <div style={{height:"6px",background:"repeating-linear-gradient(45deg,#ffb347 0 10px,#1a1408 10px 20px)"}}/>
+    </div>
     <div style={{flex:1,overflow:"auto",padding:"14px"}}>
-      <div style={{padding:"10px 12px",background:"#12122a",border:"1px dashed #3a3a6a",borderRadius:"11px",marginBottom:"14px",fontSize:"11px",color:"#888",lineHeight:1.6}}>🛒 새 주문은 <b style={{color:"#c084fc"}}>💻 인터넷 › 굿즈컴퍼니</b>에서만 가능해요.<br/>여기서는 제작 진행상황을 확인할 수 있어요.</div>
+      <div style={{padding:"10px 12px",background:"#1c1710",border:"1px dashed #4a3a22",borderRadius:"11px",marginBottom:"14px",fontSize:"11px",color:"#a8987e",lineHeight:1.6}}>🛒 새 주문은 <b style={{color:"#ffb347"}}>💻 인터넷 › 굿즈팩토리</b>에서만 가능해요.<br/>여기서는 제작 진행상황을 확인할 수 있어요.</div>
       <div style={{fontSize:"12px",fontWeight:"700",color:"#ffd166",marginBottom:"8px"}}>🚚 제작 중 ({making.length})</div>
       {!making.length&&<div style={{fontSize:"11px",color:"#555",marginBottom:"14px"}}>제작 중인 굿즈가 없어요</div>}
       {making.map(o=>row(o,Math.min(1,Math.max(0,(state.day-o.orderedDay)/Math.max(1,o.readyDay-o.orderedDay)))))}

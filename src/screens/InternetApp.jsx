@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { MajorlandScreen, GenreScreen } from "./gameScreens.jsx";
+import { MajorlandScreen } from "./gameScreens.jsx";
 import GoodsFactoryStore from "./GoodsFactoryStore.jsx";
+import GenreLabSite from "./GenreLabSite.jsx";
 
 /* ============================================================
    인터넷 앱 (데스크톱 창 내부) — 브라우저 메타포
@@ -82,7 +83,7 @@ function GoodsFactory({ onHome, state, setState }) {
 }
 
 // ── 계정 페이지 (구글 프로필풍) — 내정보/장르/지갑/활동기록 ──
-function Account({ onHome, initialMenu, state, setState }) {
+function Account({ onHome, go, initialMenu, state }) {
   const [menu, setMenu] = useState(initialMenu || "profile");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -132,12 +133,16 @@ function Account({ onHome, initialMenu, state, setState }) {
               <button onClick={save} style={{ padding: "12px 32px", borderRadius: 8, border: "none", background: "#1a73e8", color: "#fff", fontWeight: 700, fontSize: 15, cursor: "pointer" }}>{saved ? "저장됨 ✓" : "저장"}</button>
             </div>
           ) : menu === "genre" ? (
-            <div>
-              <h1 style={{ fontSize: 26, color: "#202124", fontWeight: 500, margin: "0 0 4px" }}>장르 설정</h1>
-              <p style={{ color: "#5f6368", fontSize: 14, margin: "0 0 16px" }}>내 장르를 만들고 전환하세요.</p>
-              <div style={{ height: 620, background: "#0d0d1a", borderRadius: 12, overflow: "hidden", border: "1px solid #dadce0" }}>
-                <GenreScreen state={state} setState={setState} />
-              </div>
+            <div style={{ maxWidth: 560 }}>
+              <h1 style={{ fontSize: 26, color: "#202124", fontWeight: 500, margin: "0 0 6px" }}>장르</h1>
+              <p style={{ color: "#5f6368", fontSize: 14, margin: "0 0 20px" }}>장르 생성·수정·전환은 전문 서비스 <b>장르연구소</b>에서 관리해요.</p>
+              <button onClick={() => go && go("genrelab")} style={{ display: "flex", alignItems: "center", gap: 14, padding: "18px 22px", borderRadius: 14, border: "1px solid #e0d5f5", background: "linear-gradient(135deg,#faf7ff,#f1eafd)", cursor: "pointer", boxShadow: "0 2px 12px rgba(124,58,237,0.1)" }}>
+                <span style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg,#7c3aed,#a855f7)", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 26 }}>🧪</span>
+                <span style={{ textAlign: "left" }}>
+                  <span style={{ display: "block", fontSize: 16, fontWeight: 800, color: "#7c3aed" }}>장르연구소 바로가기</span>
+                  <span style={{ display: "block", fontSize: 12, color: "#8a80a8", marginTop: 2 }}>내가 파는 장르를 정의하는 실험실 · 현재 {(state && state.genres && state.genres.length) || 0}개 보유</span>
+                </span>
+              </button>
             </div>
           ) : (
             <div style={{ maxWidth: 560 }}>
@@ -186,6 +191,7 @@ function Home({ go }) {
         <div style={{ display: "flex", gap: 32 }}>
           {bookmark("🎪", "메이저랜드", "majorland", "linear-gradient(135deg,#ff6b6b,#ffa94d)")}
           {bookmark("🏭", "굿즈팩토리", "factory", "linear-gradient(135deg,#2d5bff,#6ba3ff)")}
+          {bookmark("🧪", "장르연구소", "genrelab", "linear-gradient(135deg,#7c3aed,#a855f7)")}
         </div>
       </div>
     </div>
@@ -199,6 +205,7 @@ export default function InternetApp({ state, setState } = {}) {
 
   if (route === "majorland") return <Majorland onHome={home} state={state} setState={setState} />;
   if (route === "factory") return <GoodsFactory onHome={home} state={state} setState={setState} />;
-  if (route.startsWith("acct:")) return <Account onHome={home} initialMenu={route.slice(5)} state={state} setState={setState} />;
+  if (route === "genrelab") return <Site onHome={home}><GenreLabSite state={state} setState={setState} /></Site>;
+  if (route.startsWith("acct:")) return <Account onHome={home} go={go} initialMenu={route.slice(5)} state={state} />;
   return <Home go={go} />;
 }

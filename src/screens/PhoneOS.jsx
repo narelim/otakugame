@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
-import { SNSScreen, ProfileScreen, GalleryScreen } from "./gameScreens.jsx";
-import { MessagesApp, JobcatApp, BankApp, FactoryStatusApp, CalendarApp } from "./phoneApps.jsx";
+import MaboApp from "./maboApp.jsx";
+import { MessagesApp, GalleryApp, JobcatApp, BankApp, FactoryStatusApp, CalendarApp } from "./phoneApps.jsx";
 import { unreadCount, markThreadRead } from "../systems/messageSystem.js";
 import { isEventDay } from "../systems/eventSystem.js";
 
@@ -87,11 +87,9 @@ export default function PhoneOS({state,setState,onClose}){
 
   let content;
   if(!top)content=<HomeScreen state={state} onOpen={(id)=>push({app:id})} badgeOf={badgeOf}/>;
-  else if(top.app==="mabo")content=top.view==="profile"
-    ?<ProfileScreen state={state} setState={setState}/>
-    :<SNSScreen state={state} setState={setState} onOpenProfile={()=>push({app:"mabo",view:"profile"})}/>;
+  else if(top.app==="mabo")content=<MaboApp state={state} setState={setState} view={top.view} push={push}/>;
   else if(top.app==="messages")content=<MessagesApp state={state} view={top.view} push={push} markRead={markRead}/>;
-  else if(top.app==="gallery")content=<GalleryScreen/>;
+  else if(top.app==="gallery")content=<GalleryApp/>;
   else if(top.app==="jobcat")content=<JobcatApp state={state} setState={setState}/>;
   else if(top.app==="bank")content=<BankApp state={state}/>;
   else if(top.app==="factory")content=<FactoryStatusApp state={state}/>;
