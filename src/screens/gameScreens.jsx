@@ -3,8 +3,9 @@ import { DrawingApp } from "../components/DrawingApp.jsx";
 import { GOODS_TYPES, BADGE_SHAPES, BOOTH_ITEMS, CP_TYPES, DAILY_ACTIONS, BOOTH_SIZES, SCALE_LABEL, PHONE_APPS, FAN_ACCOUNTS, MEDIA_LIST, MEDIA_GENRES, APPEARANCE_TAGS, PERSONALITY_TAGS, CONCEPT_TAGS, POSITION_TAGS, POPULARITY_TAGS, POP_TIP, VIBE_TAGS, BG_TAGS, AU_TAGS, GTYPE_LIST, ALLCHAR_MODES, CP_FIX, CP_STRENGTH, CP_CONTACT, CP_POP, MAX_SAVES, SAVE_KEY, ACT_MAX } from "../data/gameData.js";
 import { starPath, heartPath, buildOutline } from "../utils/draw.js";
 import { switchActiveGenre, canAddGenre, generateGenreName, legacyFields } from "../systems/genreSystem.js";
-import { generateEventSchedule, isEventDay, nearestUpcomingEvent, nearestAppliedEvent, advanceDay } from "../systems/eventSystem.js";
+import { generateEventSchedule, isEventDay, nearestUpcomingEvent, nearestAppliedEvent } from "../systems/eventSystem.js";
 import { simulateEvent, commitEventResult } from "../systems/eventSim.js";
+import { performAction, sleepDay } from "../systems/dailySystem.js";
 import { logTx } from "../systems/bankSystem.js";
 import { pushMessage } from "../systems/messageSystem.js";
 import { boothBonuses, catalogItem } from "../data/boothData.js";
@@ -339,20 +340,14 @@ export function DailyScreen({state,setState}){
   const phase=eventDay?{l:"🎪 행사 당일",c:"#e94560"}:used===0?{l:"🌅 오전",c:"#ffd166"}:used===1?{l:"☀️ 오후",c:"#ffd166"}:{l:"🌆 저녁 · 자유시간",c:"#4cc9f0"};
   const nextEv=nearestUpcomingEvent(state);
   const doAction=(action)=>{
-    if(eventDay){setLog(l=>[{text:"🎪 행사 당일엔 행동할 수 없어요. 행사장 탭에서 참가하세요!",type:"bad",id:Date.now()},...l]);return;}
-    if(used>=ACT_MAX){setLog(l=>[{text:"오늘 행동을 다 썼어요. 🌙 취침으로 다음 날로 넘기세요!",type:"neutral",id:Date.now()},...l]);return;}
-    if(action.id==="official"||action.id==="newgoods"){if(Math.random()>0.4){setLog(l=>[{text:`${action.icon} 오늘은 ${action.name}이 없네... 내일 다시!`,type:"neutral",id:Date.now()},...l]);return;}}
-    if(state.gold+action.gold<0){setLog(l=>[{text:`💸 돈 부족 (${action.name}: ₩${Math.abs(action.gold).toLocaleString()} 필요)`,type:"bad",id:Date.now()},...l]);return;}
-    setState(s=>{let ns={...s,stamina:Math.max(0,Math.min(100,s.stamina+action.stamina)),mentalHealth:Math.max(0,Math.min(100,s.mentalHealth+action.mental)),actionsToday:(s.actionsToday||0)+1,imageTicket:action.id==="sleep"?Math.min(9,(s.imageTicket||0)+1):s.imageTicket};if(action.gold)ns=logTx(ns,action.gold,action.name,action.icon,"daily");return ns;});
-    if(action.id==="sleep")prefetchImages({genre:state.genre&&state.genre.name,character:state.genre&&state.genre.chars},5);
-    const msg=[`${action.icon} ${action.name}`,action.stamina!==0?`체력 ${action.stamina>0?"+":""}${action.stamina}%`:null,action.mental!==0?`멘탈 ${action.mental>0?"+":""}${action.mental}%`:null,action.gold!==0?`₩${action.gold.toLocaleString()}`:null].filter(Boolean).join(" · ");
-    setLog(l=>[{text:msg,sub:action.desc,type:action.stamina>0||action.mental>0?"good":"neutral",id:Date.now()},...l]);
+    const r=performAction(state,action);
+    if(r.ok)setState(()=>r.state);
+    setLog(l=>[{text:r.text,sub:r.sub,type:r.type||"neutral",id:Date.now()},...l]);
   };
   const sleep=()=>{
-    if(eventDay){setLog(l=>[{text:"🎪 행사 당일엔 잘 수 없어요. 행사를 먼저 치르세요!",type:"bad",id:Date.now()},...l]);return;}
-    const nd=state.day+1;const completed=(state.orders||[]).filter(o=>o.status==="making"&&o.readyDay<=nd);
-    setState(s=>advanceDay({...s,stamina:Math.min(100,s.stamina+5),mentalHealth:Math.min(100,s.mentalHealth+5)}));
-    setLog(l=>[{text:`🌙 Day ${nd} 시작! (체력·멘탈 +5)${completed.length?` 🏭 굿즈 ${completed.length}건 완성!`:""}`,sub:completed.length?"굿즈팩토리 재고에 추가됐어요":"푹 잤다",type:completed.length?"good":"neutral",id:Date.now()},...l]);
+    const r=sleepDay(state);
+    if(r.ok)setState(()=>r.state);
+    setLog(l=>[{text:r.text,sub:r.sub,type:r.type||"bad",id:Date.now()},...l]);
   };
   return(<div style={{height:"100%",overflow:"auto",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif"}}>
     <div style={{padding:"12px 14px",background:"#12122a",borderBottom:"1px solid #2a2a4a",position:"sticky",top:0,zIndex:10}}>
