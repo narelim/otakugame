@@ -9,7 +9,8 @@ import InternetApp from "./InternetApp.jsx";
 import BoothPlannerApp from "./BoothPlannerApp.jsx";
 import PhoneOS from "./PhoneOS.jsx";
 import { unreadCount } from "../systems/messageSystem.js";
-import { DailyScreen, EventScreen, GalleryScreen } from "./gameScreens.jsx";
+import EventDayScreen from "./EventDayScreen.jsx";
+import { DailyScreen, GalleryScreen } from "./gameScreens.jsx";
 
 const MONTHS = ["1월","2월","3월","4월","5월","6월","7월","8월","9월","10월","11월","12월"];
 
@@ -254,11 +255,11 @@ export default function DesktopShell({ state, setState }) {
             <button onClick={() => setPowerMode(null)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #7c3aed", background: "rgba(124,58,237,0.15)", color: "#c084fc", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>⏻ 컴퓨터 켜기</button>
           </div>
           <div style={{ flex: 1, minHeight: 0, display: "flex", justifyContent: "center", overflow: "hidden" }}>
-            <div style={{ width: "100%", maxWidth: powerMode === "event" ? 680 : 480, height: "100%" }}>
+            <div style={{ width: "100%", maxWidth: powerMode === "event" ? "none" : 480, height: "100%" }}>
               <ErrorBoundary key={powerMode}>
                 {powerMode === "daily"
                   ? <DailyScreen state={state} setState={setState} />
-                  : <EventScreen state={state} setState={setState} onBack={() => setPowerMode(null)} />}
+                  : <EventDayScreen state={state} setState={setState} onExit={() => setPowerMode(null)} />}
               </ErrorBoundary>
             </div>
           </div>

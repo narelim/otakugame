@@ -3,7 +3,7 @@
 // - 그림 세이브(seoko_draw_saves)·NPC 로스터·이미지풀/북마크는 기존 저장소를 그대로 사용(여기서 안 건드림).
 const DB = "seokoSave", VER = 1, STORE = "slots";
 export const MAIN_SLOT = "main";
-export const SAVE_VERSION = 3; // state 구조가 바뀌면 올리고 migrate()에 단계 추가
+export const SAVE_VERSION = 4; // state 구조가 바뀌면 올리고 migrate()에 단계 추가
 
 let _p = null;
 function db() {
@@ -58,5 +58,6 @@ function migrate(rec) {
   let state = rec.state;
   if ((rec.version || 1) < 2) state = { job: null, transactions: [], messages: [], ...state }; // v2: 알바·은행·메시지
   if ((rec.version || 1) < 3) state = { boothInv: null, boothLayout: null, ...state };          // v3: 부스 플래너 v2 (실측·개수)
+  if ((rec.version || 1) < 4) state = { stats: { spend: {}, earn: {} }, ...state };             // v4: 성향 통계
   return { state, version: rec.version, savedAt: rec.savedAt };
 }

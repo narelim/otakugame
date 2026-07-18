@@ -86,6 +86,27 @@ export const GOODS_DISPLAY = {
 };
 export const goodsDisplaySpec = (type) => ({ ...(GOODS_DISPLAY[type] || GOODS_DISPLAY.postcard) });
 
+// 배치물 스펙: 카탈로그 물품 / 내 그림 포스터(사이즈 선택) / 제작 굿즈 전시
+export const specFor = (p) => p.kind === "art" ? artPosterSpec(p.size) : p.kind === "goods" ? goodsDisplaySpec(p.gtype) : catalogItem(p.refId);
+
+// 존 안으로 중심좌표 클램프 (비율계: x=부스폭, y=BOOTH_VIEW_H)
+export function clampToZoneW(c, x, y, boothW) {
+  const z = zoneOf(c.zone);
+  const rw = Math.min(1, (c.fullWidth ? boothW : c.w) / boothW), rh = Math.min(1, c.h / BOOTH_VIEW_H);
+  const x2 = c.fullWidth ? 0.5 : Math.max(rw / 2, Math.min(1 - rw / 2, x));
+  const yMin = z.y0 / BOOTH_VIEW_H + rh / 2, yMax = Math.max(yMin, z.y1 / BOOTH_VIEW_H - rh / 2);
+  return { x: x2, y: Math.max(yMin, Math.min(yMax, y)) };
+}
+
+// 미전시 재고 굿즈 자동 진열 (테이블 위 한 줄 + 뒷벽 한 줄)
+export function autoGoodsInstances(autoGoods, boothW) {
+  const mk = (arr, yR) => arr.map((g, i) => { const spec = goodsDisplaySpec(g.type); const n = arr.length; const x = n === 1 ? 0.5 : 0.13 + 0.74 * i / (n - 1); return { iid: "auto_" + g.id, kind: "goods", auto: true, refId: g.id, gtype: g.type, name: g.name, ...clampToZoneW(spec, x, yR, boothW) }; });
+  return [
+    ...mk(autoGoods.filter(g => goodsDisplaySpec(g.type).zone === "table"), 0.77),
+    ...mk(autoGoods.filter(g => goodsDisplaySpec(g.type).zone === "wall"), 0.60),
+  ];
+}
+
 // 구 BOOTH_ITEMS 보유분 → v2 카탈로그 대응 (기존 세이브 이관)
 export const LEGACY_ITEM_MAP = { banner: "banner_top_w", stand_s: "disp_tier2", stand_l: "net_full", promo: "promo_acryl", cloth: "cloth_purple", light: "light_strip" };
 

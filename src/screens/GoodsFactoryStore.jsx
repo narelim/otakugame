@@ -49,7 +49,7 @@ export default function GoodsFactoryStore({ state, setState }) {
   const finalize = (snap, opts, quantity, goodsType, outlineImage) => {
     const tt = GOODS_TYPES.find(x => x.id === goodsType);
     const order = { id: "ord_" + (++_seq) + "_" + orders.length, artworkId: opts.artworkId, artworkSnapshot: snap, goodsType, options: { size: opts.size, shape: tt.shapes ? opts.shape : undefined, hasOutline: tt.outline ? opts.hasOutline : false, price: tt.basePrice, outlineImage: outlineImage || undefined }, quantity, totalCost: tt.cost * quantity, orderedDay: state.day, readyDay: state.day + tt.prodDays, status: "making" };
-    setState(s => { const ns = logTx(s, -order.totalCost, `굿즈 제작 · ${tt.name} ${quantity}개`, "🏭"); return { ...ns, orders: [order, ...(ns.orders || [])] }; });
+    setState(s => { const ns = logTx(s, -order.totalCost, `굿즈 제작 · ${tt.name} ${quantity}개`, "🏭", "goods"); return { ...ns, orders: [order, ...(ns.orders || [])] }; });
     setToast({ t: `🏭 제작 시작! ${tt.name} ${quantity}개 · D-${tt.prodDays} 후 완성`, bad: false });
     resetOrder(); setTab("history");
   };

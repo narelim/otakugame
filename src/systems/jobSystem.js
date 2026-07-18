@@ -37,7 +37,7 @@ export function processPayday(state){
   if(worked<=0)return state;
   const amount=Math.max(1000,Math.round(j.pay*worked/30/1000)*1000);
   let ns={...state,job:{...state.job,lastPaidDay:state.day}};
-  ns=logTx(ns,amount,`${j.name} 월급 (근무 ${worked}일)`,"💼");
+  ns=logTx(ns,amount,`${j.name} 월급 (근무 ${worked}일)`,"💼","job");
   ns=pushMessage(ns,{from:"모모뱅크",avatar:"🏦",text:`[입금] ${j.name} 급여 ₩${amount.toLocaleString()}이 입금되었습니다. (근무 ${worked}일)`});
   return ns;
 }

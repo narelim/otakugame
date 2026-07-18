@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { SAVE_KEY } from "../data/gameData.js";
-import { BOOTH_VIEW_H, BOOTH_WIDTHS, BOOTH_ZONES, zoneOf, BOOTH_CATS, BOOTH_CATALOG, catalogItem, ART_POSTER_SIZES, ART_POSTER_MAX, artPosterSpec, goodsDisplaySpec, layoutBonuses, invFromLegacy } from "../data/boothData.js";
-import { goodsMockup } from "../utils/goodsMockup.js";
+import { BOOTH_VIEW_H, BOOTH_WIDTHS, BOOTH_ZONES, zoneOf, BOOTH_CATS, BOOTH_CATALOG, catalogItem, ART_POSTER_SIZES, ART_POSTER_MAX, artPosterSpec, goodsDisplaySpec, layoutBonuses, invFromLegacy, specFor, clampToZoneW, autoGoodsInstances } from "../data/boothData.js";
+import { ItemVisual, GoodsImg } from "../components/BoothStage.jsx";
 import { logTx } from "../systems/bankSystem.js";
 
 /* ============================================================
@@ -19,54 +19,6 @@ const nextIid = () => "b" + Date.now().toString(36) + (_iid++);
 
 function loadArts() {
   try { const raw = localStorage.getItem(SAVE_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
-}
-
-// 배치물 스펙: 카탈로그 물품 / 내 그림 포스터(사이즈 선택) / 제작 굿즈 전시
-const specFor = (p) => p.kind === "art" ? artPosterSpec(p.size) : p.kind === "goods" ? goodsDisplaySpec(p.gtype) : catalogItem(p.refId);
-
-// 굿즈 목업 이미지 (Canvas 자동 생성 → 비동기 로드)
-function GoodsImg({ goods, style }) {
-  const [url, setUrl] = useState(null);
-  const gid = goods && goods.id;
-  useEffect(() => { let a = true; if (goods) goodsMockup(goods).then(u => { if (a) setUrl(u); }); return () => { a = false; }; }, [gid]); // eslint-disable-line react-hooks/exhaustive-deps
-  return url ? <img src={url} alt="" draggable={false} style={style} /> : null;
-}
-// 존 안으로 중심좌표 클램프 (비율계: x=부스폭, y=BOOTH_VIEW_H)
-function clampToZoneW(c, x, y, boothW) {
-  const z = zoneOf(c.zone);
-  const rw = Math.min(1, (c.fullWidth ? boothW : c.w) / boothW), rh = Math.min(1, c.h / BOOTH_VIEW_H);
-  const x2 = c.fullWidth ? 0.5 : Math.max(rw / 2, Math.min(1 - rw / 2, x));
-  const yMin = z.y0 / BOOTH_VIEW_H + rh / 2, yMax = Math.max(yMin, z.y1 / BOOTH_VIEW_H - rh / 2);
-  return { x: x2, y: Math.max(yMin, Math.min(yMax, y)) };
-}
-
-// 테이블보 패턴 → CSS background
-function patternCSS(p) {
-  if (!p) return { background: "#b9a5e8" };
-  if (p.kind === "solid") return { background: p.a };
-  if (p.kind === "stripe") return { background: `repeating-linear-gradient(90deg, ${p.a} 0 14px, ${p.b} 14px 28px)` };
-  if (p.kind === "check") return { background: `${p.a} repeating-linear-gradient(0deg, ${p.b}55 0 10px, transparent 10px 20px), repeating-linear-gradient(90deg, ${p.b}55 0 10px, transparent 10px 20px)`, backgroundColor: p.a };
-  if (p.kind === "lace") return { background: `radial-gradient(circle at 8px 8px, ${p.b} 2.5px, transparent 3px) 0 0/22px 22px, ${p.a}`, backgroundColor: p.a };
-  return { background: p.a };
-}
-
-// 물품 비주얼 (실측 박스 안을 종류별로 그림)
-function ItemVisual({ c, inst, genreName }) {
-  const base = { width: "100%", height: "100%", borderRadius: 4, boxSizing: "border-box" };
-  if (c.cat === "banner") {
-    if (inst.artImg) return <img src={inst.artImg} alt="" draggable={false} style={{ ...base, objectFit: "cover", display: "block", border: "2px solid #fff", boxShadow: "0 3px 10px rgba(0,0,0,0.3)" }} />;
-    return <div style={{ ...base, background: "linear-gradient(120deg,#7c3aed,#e94560,#ffd166)", border: "2px solid #fff", boxShadow: "0 3px 10px rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}><span style={{ color: "#fff", fontWeight: 900, fontSize: 12, textShadow: "0 1px 3px rgba(0,0,0,0.4)", whiteSpace: "nowrap" }}>{genreName || "MY CIRCLE"}</span></div>;
-  }
-  if (c.cat === "cloth") return <div style={{ ...base, ...patternCSS(c.pattern), border: "1px solid rgba(0,0,0,0.15)", borderRadius: "0 0 6px 6px", boxShadow: "inset 0 6px 8px rgba(0,0,0,0.12)" }} />;
-  if (c.cat === "net") return <div style={{ ...base, background: "repeating-linear-gradient(0deg, #9aa5b8 0 1.5px, transparent 1.5px 11px), repeating-linear-gradient(90deg, #9aa5b8 0 1.5px, transparent 1.5px 11px)", border: "2.5px solid #7f8b9e", borderRadius: 3, backgroundColor: "rgba(255,255,255,0.25)" }} />;
-  if (c.cat === "display") { const tiers = c.id === "disp_tier3" ? 3 : 2;
-    return <div style={{ ...base, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>{Array.from({ length: tiers }, (_, i) => <div key={i} style={{ height: `${100 / tiers}%`, width: `${100 - (tiers - 1 - i) * (36 / tiers)}%`, alignSelf: "center", background: "linear-gradient(180deg,#f6f1e8,#d9cfbc)", border: "1px solid #b8ab90", borderRadius: 2 }} />)}</div>; }
-  if (c.id === "promo_acryl") return <div style={{ ...base, background: "linear-gradient(180deg,rgba(190,225,255,0.5),rgba(140,180,230,0.35))", border: "1.5px solid rgba(120,160,210,0.8)", borderRadius: "3px 3px 5px 5px" }} />;
-  if (c.id === "promo_basket") return <div style={{ ...base, background: "repeating-linear-gradient(45deg,#caa06a 0 4px,#a87f4c 4px 8px)", border: "2px solid #8a6437", borderRadius: "4px 4px 8px 8px" }} />;
-  if (c.id === "light_strip") return <div style={{ ...base, background: "linear-gradient(90deg,#fff6c9,#ffe98a,#fff6c9)", borderRadius: 3, boxShadow: "0 0 12px 4px rgba(255,225,120,0.75)" }} />;
-  if (c.id === "light_clip") return <div style={{ ...base, background: "#3a3f4c", borderRadius: "40% 40% 20% 20%", boxShadow: "0 10px 14px 2px rgba(255,240,180,0.5)", border: "1px solid #23272f" }} />;
-  if (c.id === "light_garland") return <div style={{ ...base, background: "radial-gradient(circle at 6px 55%, #ffd166 3px, transparent 4px) 0 0/16px 100% repeat-x", filter: "drop-shadow(0 0 5px rgba(255,209,102,0.9))" }} />;
-  return <div style={{ ...base, background: "#fff", border: "1.5px solid #cbbfe5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>{c.icon}</div>;
 }
 
 export default function BoothPlannerApp({ state, setState }) {
@@ -162,7 +114,7 @@ export default function BoothPlannerApp({ state, setState }) {
   const pay = () => {
     if (setState) {
       setState(s => {
-        let ns = total > 0 ? logTx(s, -total, "부스 물품 구매", "🏪") : s;
+        let ns = total > 0 ? logTx(s, -total, "부스 물품 구매", "🏪", "booth") : s;
         const newInv = { ...((ns.boothInv) || invFromLegacy(ns.boothItems)) };
         Object.entries(needMap).forEach(([id, need]) => { newInv[id] = Math.max(newInv[id] || 0, need); });
         return { ...ns, boothInv: newInv, boothLayout: { version: 2, boothSize, items: placed } };
@@ -180,14 +132,7 @@ export default function BoothPlannerApp({ state, setState }) {
   const catInfo = BOOTH_CATS.find(x => x.id === cat);
 
   // 자동 전시: 직접 전시하지 않은 재고 굿즈를 존별로 자동 배열 (저장 안 됨 — 항상 파생)
-  const autoInstances = (() => {
-    const autos = stockedGoods.filter(g => !placedGoodsIds.has(String(g.id)));
-    const mk = (arr, yR) => arr.map((g, i) => { const spec = goodsDisplaySpec(g.type); const n = arr.length; const x = n === 1 ? 0.5 : 0.13 + 0.74 * i / (n - 1); return { iid: "auto_" + g.id, kind: "goods", auto: true, refId: g.id, gtype: g.type, name: g.name, ...clampToZone(spec, x, yR) }; });
-    return [
-      ...mk(autos.filter(g => goodsDisplaySpec(g.type).zone === "table"), 0.77),
-      ...mk(autos.filter(g => goodsDisplaySpec(g.type).zone === "wall"), 0.60),
-    ];
-  })();
+  const autoInstances = autoGoodsInstances(stockedGoods.filter(g => !placedGoodsIds.has(String(g.id))), boothW);
 
   // ── 스테이지 (실측 비율 부스 정면 뷰) — 렌더 함수 (컴포넌트 아님) ──
   const renderStage = (readonly) => {
