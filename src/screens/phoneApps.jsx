@@ -157,7 +157,7 @@ export function JobcatApp({state,setState}){
           {DOW_NAMES.map((d,i)=>{const on=cur.workDays.includes(i);const isToday=i===today;
             return <span key={d} style={{flex:1,textAlign:"center",padding:"5px 0",borderRadius:"7px",fontSize:"10px",fontWeight:"800",background:on?"#3a2410":"#1d1710",color:on?"#ffb763":"#5a4d3a",border:isToday?"1.5px solid #ffd166":"1.5px solid transparent"}}>{d}</span>;})}
         </div>
-        <div style={{fontSize:"11px",color:"#a8987e",lineHeight:1.8}}>일당 {KRW(cur.dayWage)} (성과 ×0.5~1.4) · 체력 -{cur.staminaCost}<br/>이번 달 적립 <b style={{color:"#ffd166"}}>{KRW(pending)}</b> · 월급날 {PAYDAY}일 (D-{daysToPayday(gd)})</div>
+        <div style={{fontSize:"11px",color:"#a8987e",lineHeight:1.8}}>일당 {KRW(cur.dayWage)} (성과 ×0.5~1.4) · 체력 -{cur.staminaCost} · 멘탈 -{cur.mentalCost}<br/>이번 달 적립 <b style={{color:"#ffd166"}}>{KRW(pending)}</b> · 월급날 {PAYDAY}일 (D-{daysToPayday(gd)})</div>
         <button onClick={()=>canWork&&setWorking(true)} disabled={!canWork} style={{width:"100%",marginTop:"11px",padding:"13px",borderRadius:"11px",border:"none",background:canWork?"linear-gradient(135deg,#ff9f43,#e94560)":"#241b0e",color:canWork?"#fff":"#6a5a42",fontWeight:"900",fontSize:"14px",cursor:canWork?"pointer":"not-allowed",boxShadow:canWork?"0 4px 16px rgba(255,159,67,0.4)":"none"}}>{canWork?"🕒 출근하기!":worked?"✓ 오늘 근무 완료":"🐾 오늘은 출근 못 한다냥"}</button>
         {reason&&!canWork&&<div style={{fontSize:"10px",color:"#8a7a5e",marginTop:"6px",textAlign:"center"}}>{reason}</div>}
         {!confirmQuit

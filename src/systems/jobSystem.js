@@ -7,17 +7,17 @@ import { pushMessage } from "./messageSystem.js";
 export const PAYDAY=25;
 export const DOW_NAMES=["일","월","화","수","목","금","토"];
 export const JOBS=[
-  {id:"flyer", icon:"📮",name:"전단지 배포",       dayWage:10500,workDays:[2,6],  staminaCost:10,minFame:0, desc:"동네 한 바퀴 돌면 끝. 몸은 힘들어도 마음은 편하다.",
+  {id:"flyer", icon:"📮",name:"전단지 배포",       dayWage:10500,workDays:[2,6],  staminaCost:10,mentalCost:2,minFame:0, desc:"동네 한 바퀴 돌면 끝. 몸은 힘들어도 마음은 편하다.",
     game:{title:"전단지 타이밍 배포",hint:"행인이 앞을 지날 때 딱 맞춰 건네자!",color:"#ff9f43"}},
-  {id:"cafe",  icon:"☕",name:"카페 홀 알바",      dayWage:11500,workDays:[1,3,5],staminaCost:12,minFame:0, desc:"라떼아트는 못 하지만 서빙은 자신 있다.",
+  {id:"cafe",  icon:"☕",name:"카페 홀 알바",      dayWage:11500,workDays:[1,3,5],staminaCost:12,mentalCost:3,minFame:0, desc:"라떼아트는 못 하지만 서빙은 자신 있다.",
     game:{title:"라떼 붓기",hint:"우유를 딱 알맞은 순간에 멈추자!",color:"#b98756"}},
-  {id:"conv",  icon:"🏪",name:"편의점 야간 알바",  dayWage:14000,workDays:[2,4,0],staminaCost:14,minFame:0, desc:"새벽엔 한산해서 폰질 가능. 대신 밤샘 각오.",
+  {id:"conv",  icon:"🏪",name:"편의점 야간 알바",  dayWage:14000,workDays:[2,4,0],staminaCost:14,mentalCost:5,minFame:0, desc:"새벽엔 한산해서 폰질 가능. 대신 밤샘 각오.",
     game:{title:"바코드 스캔",hint:"상품이 판정선에 올 때 스캔!",color:"#4cc9f0"}},
-  {id:"logis", icon:"📦",name:"물류센터 상하차",   dayWage:30500,workDays:[3,6],  staminaCost:22,minFame:0, desc:"고수익 보장. 하지만 어깨가 남아나질 않는다.",
+  {id:"logis", icon:"📦",name:"물류센터 상하차",   dayWage:30500,workDays:[3,6],  staminaCost:22,mentalCost:7,minFame:0, desc:"고수익 보장. 하지만 어깨가 남아나질 않는다.",
     game:{title:"박스 받기",hint:"박스가 중앙에 올 때 받아내자!",color:"#e0702e"}},
-  {id:"tutor", icon:"✏️",name:"미술학원 보조강사", dayWage:25500,workDays:[2,4],  staminaCost:10,minFame:30,desc:"그림 좀 그린다고 소문나야 갈 수 있는 자리.",
+  {id:"tutor", icon:"✏️",name:"미술학원 보조강사", dayWage:25500,workDays:[2,4],  staminaCost:10,mentalCost:2,minFame:30,desc:"그림 좀 그린다고 소문나야 갈 수 있는 자리.",
     game:{title:"첨삭 포인트",hint:"고칠 곳을 정확한 순간에 짚자!",color:"#c084fc"}},
-  {id:"assist",icon:"🖋",name:"프로 작가 어시",    dayWage:37500,workDays:[5,6],  staminaCost:16,minFame:80,desc:"업계 인맥은 덤. 상당한 인지도가 필요하다.",
+  {id:"assist",icon:"🖋",name:"프로 작가 어시",    dayWage:37500,workDays:[5,6],  staminaCost:16,mentalCost:4,minFame:80,desc:"업계 인맥은 덤. 상당한 인지도가 필요하다.",
     game:{title:"스크린톤 붙이기",hint:"칸에 딱 맞는 순간 톤을 붙이자!",color:"#e94560"}},
 ];
 export const weekdayOf=(day)=>((day%7)+7)%7;
@@ -45,13 +45,14 @@ export function quitJob(state){
   if(j)ns=pushMessage(ns,{from:"알바냥",avatar:"🐱",text:`${j.name}을(를) 그만뒀다냥. 다음 알바도 알바냥에서 찾아보라냥~`});
   return ns;
 }
-// 출근(미니게임 종료 후 호출): 일당 적립 + 체력 소모. 하루 1회.
+// 출근(미니게임 종료 후 호출): 일당 적립 + 체력·멘탈 소모. 하루 1회.
 export function workShift(state,mult){
   const j=getJob(state);if(!j||hasWorkedToday(state)||!isWorkdayToday(state))return state;
   const wage=shiftWage(j,mult);
   return {...state,
     job:{...state.job,attend:[...(state.job.attend||[]),{day:state.day,wage}]},
     stamina:Math.max(0,(state.stamina||0)-j.staminaCost),
+    mentalHealth:Math.max(0,(state.mentalHealth||0)-(j.mentalCost||0)),
   };
 }
 // 다음 월급일까지 남은 일수 (게임 달력 30일 기준)

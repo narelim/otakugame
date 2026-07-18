@@ -47,10 +47,15 @@ export function endOfDay(s){
 // 하루 진행(취침/실시간 공용): 주문완료 + 날짜 + 이벤트(라인업>D-day알림>랜덤)
 export function advanceDay(s){
   let ns=endOfDay({...s,day:s.day+1,gameDate:nextGameDate(s.gameDate),actionsToday:0});
+  // 마감 압박: 신청해 둔 행사 D-7~D-1엔 원고·재고·포장 걱정으로 멘탈이 갈린다
+  const PRESSURE=4;
+  const ae=ns.activeEvent;const dTo=ae?ae.startDay-ns.day:-1;
+  const pressured=!!(ae&&dTo>=1&&dTo<=7);
+  if(pressured)ns={...ns,mentalHealth:Math.max(0,ns.mentalHealth-PRESSURE)};
   const lineup=((ns.genre&&ns.genre.eventSchedule)||[]).find(e=>e.announcement&&(e.startDay-ns.day)===7);
   const notice=dDayNotice(ns);
   if(lineup){const delta={followers:5+Math.floor(Math.random()*16),fame:3,mental:10};ns=applyEventDelta(ns,delta);ns={...ns,pendingSnsEvent:{event:{id:"lineup_announced",name:"라인업 공개",icon:"📣",presentation:"banner",message:`${lineup.name} 라인업이 공개됐다. 탐라에 설레는 분위기가 흐른다.`},result:delta,needsChoice:false}};}
-  else if(notice){ns={...ns,pendingSnsEvent:{event:{id:"dday_notice",name:notice.dday===0?"행사 당일":`D-${notice.dday}`,icon:notice.dday===0?"🎪":"📅",presentation:notice.dday<=1?"modal":"banner",message:notice.msg},result:{},needsChoice:false}};}
+  else if(notice){const msg=pressured&&notice.dday>=1?`${notice.msg} (마감 압박... 멘탈 -${PRESSURE})`:notice.msg;ns={...ns,pendingSnsEvent:{event:{id:"dday_notice",name:notice.dday===0?"행사 당일":`D-${notice.dday}`,icon:notice.dday===0?"🎪":"📅",presentation:notice.dday<=1?"modal":"banner",message:msg},result:{},needsChoice:false}};}
   else if((ns.archive||[]).length&&Math.random()<0.05){
     // 탈덕한 옛 장르의 소식이 간간히 흘러들어온다 (아련함 = 멘탈 +5)
     const mem=ns.archive[Math.floor(Math.random()*ns.archive.length)];

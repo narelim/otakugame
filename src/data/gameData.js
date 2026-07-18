@@ -32,14 +32,14 @@ export const CP_TYPES = [
   {id:"both",   label:"좌우고정충 (둘 다)"},
 ];
 export const DAILY_ACTIONS = [
-  { id:"sleep",   icon:"😴", name:"푹 쉬기",      stamina:+30, mental:+10, gold:0,     desc:"잠만 자도 세상이 달라진다" },
-  { id:"eat",     icon:"🍱", name:"밥 먹기",       stamina:+15, mental:+8,  gold:-3000, desc:"컵라면 말고 제대로 된 밥" },
-  { id:"exercise",icon:"🏃", name:"운동하기",      stamina:+25, mental:+15, gold:0,     desc:"몸이 건강해야 덕질도 한다" },
-  { id:"shorts",  icon:"📱", name:"숏츠 보기",     stamina:-5,  mental:+5,  gold:0,     desc:"어? 벌써 3시간..." },
-  { id:"recharge",icon:"📖", name:"원작 수혈",     stamina:-10, mental:+25, gold:-2000, desc:"역시 원작이 최고야..." },
+  { id:"sleep",   icon:"😴", name:"푹 쉬기",      stamina:+30, mental:+5,  gold:0,     desc:"잠만 자도 세상이 달라진다" },
+  { id:"eat",     icon:"🍱", name:"밥 먹기",       stamina:+15, mental:+4,  gold:-3000, desc:"컵라면 말고 제대로 된 밥" },
+  { id:"exercise",icon:"🏃", name:"운동하기",      stamina:+25, mental:+6,  gold:0,     desc:"몸이 건강해야 덕질도 한다" },
+  { id:"shorts",  icon:"📱", name:"숏츠 보기",     stamina:-5,  mental:+2,  gold:0,     desc:"어? 벌써 3시간..." },
+  { id:"recharge",icon:"📖", name:"원작 수혈",     stamina:-10, mental:+15, gold:-2000, desc:"역시 원작이 최고야..." },
   { id:"official",icon:"🎉", name:"공식 뉴짤 등장",stamina:0,   mental:+30, gold:0,     desc:"공식이 우릴 먹여살린다!!!" },
-  { id:"newgoods",icon:"🛒", name:"공식 굿즈 구경", stamina:0,   mental:+20, gold:-8000, desc:"지름신이 강림했다" },
-  { id:"collab",  icon:"☕", name:"작가 친구 만나기",stamina:-5,  mental:+20, gold:-5000, desc:"서로 덕질 수다. 최고의 힐링" },
+  { id:"newgoods",icon:"🛒", name:"공식 굿즈 구경", stamina:0,   mental:+15, gold:-8000, desc:"지름신이 강림했다" },
+  { id:"collab",  icon:"☕", name:"작가 친구 만나기",stamina:-5,  mental:+12, gold:-5000, desc:"서로 덕질 수다. 최고의 힐링" },
 ];
 export const PALETTE = ["#000000","#434343","#666666","#999999","#b7b7b7","#cccccc","#d9d9d9","#ffffff","#ff0000","#ff4500","#ff9900","#ffff00","#00ff00","#00ffff","#4a86e8","#0000ff","#9900ff","#ff00ff","#ff69b4","#e94560","#c084fc","#7c3aed","#06d6a0","#ffd166","#a52a2a","#8b4513","#d2691e","#f4a460","#daa520","#b8860b","#556b2f","#2f4f4f"];
 export const BOOTH_SIZES=[
