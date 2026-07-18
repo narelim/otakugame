@@ -648,7 +648,7 @@ export function EventScreen({state,setState,onBack}){
   // 부스 보너스: 플래너 v2 레이아웃(개수 합산) 우선, 없으면 레거시 보유목록
   const {fame:totalFame,sell:totalSell}=boothBonuses(state,BOOTH_ITEMS);
   const boothChips=(state.boothLayout&&state.boothLayout.version===2)
-    ?state.boothLayout.items.map(p=>p.kind==="art"?{id:p.iid,icon:"🖼",name:"포스터"}:(catalogItem(p.refId)?{id:p.iid,icon:catalogItem(p.refId).icon,name:catalogItem(p.refId).name}:null)).filter(Boolean)
+    ?state.boothLayout.items.map(p=>p.kind==="art"?{id:p.iid,icon:"🖼",name:"포스터"}:p.kind==="goods"?{id:p.iid,icon:"🧸",name:p.name||"굿즈 전시"}:(catalogItem(p.refId)?{id:p.iid,icon:catalogItem(p.refId).icon,name:catalogItem(p.refId).name}:null)).filter(Boolean)
     :owned.map(id=>{const it=BOOTH_ITEMS.find(b=>b.id===id);return it?{id,icon:it.icon,name:it.name}:null;}).filter(Boolean);
   const runEvent=()=>{
     setPhase("event");

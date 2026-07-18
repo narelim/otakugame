@@ -72,6 +72,20 @@ export const ART_POSTER_SIZES = [
 export const ART_POSTER_MAX = 6;
 export const artPosterSpec = (sizeId) => { const s = ART_POSTER_SIZES.find(x => x.id === sizeId) || ART_POSTER_SIZES[1]; return { ...s, zone: "wall" }; };
 
+// 제작 굿즈 전시 규격(cm) — 실물 크기 + 여백(목업의 링/받침 포함). 걸이류는 뒷벽, 나머지는 테이블 위.
+// 종류당 1개만 직접 전시 가능. 전시 안 한 재고 굿즈는 자동 전시된다.
+export const GOODS_DISPLAY = {
+  postcard:  { w: 11,  h: 16, zone: "table" },
+  photocard: { w: 6.5, h: 10, zone: "table" },
+  sticker:   { w: 10,  h: 10, zone: "wall"  },
+  clearfile: { w: 23,  h: 32, zone: "table" },
+  acrylic:   { w: 10,  h: 16, zone: "table" },
+  keyring:   { w: 7,   h: 11, zone: "wall"  },
+  badge:     { w: 7,   h: 7,  zone: "wall"  },
+  doujinshi: { w: 19,  h: 27, zone: "table" },
+};
+export const goodsDisplaySpec = (type) => ({ ...(GOODS_DISPLAY[type] || GOODS_DISPLAY.postcard) });
+
 // 구 BOOTH_ITEMS 보유분 → v2 카탈로그 대응 (기존 세이브 이관)
 export const LEGACY_ITEM_MAP = { banner: "banner_top_w", stand_s: "disp_tier2", stand_l: "net_full", promo: "promo_acryl", cloth: "cloth_purple", light: "light_strip" };
 

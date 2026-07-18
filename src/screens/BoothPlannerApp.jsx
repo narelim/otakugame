@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { SAVE_KEY } from "../data/gameData.js";
-import { BOOTH_VIEW_H, BOOTH_WIDTHS, BOOTH_ZONES, zoneOf, BOOTH_CATS, BOOTH_CATALOG, catalogItem, ART_POSTER_SIZES, ART_POSTER_MAX, artPosterSpec, layoutBonuses, invFromLegacy } from "../data/boothData.js";
+import { BOOTH_VIEW_H, BOOTH_WIDTHS, BOOTH_ZONES, zoneOf, BOOTH_CATS, BOOTH_CATALOG, catalogItem, ART_POSTER_SIZES, ART_POSTER_MAX, artPosterSpec, goodsDisplaySpec, layoutBonuses, invFromLegacy } from "../data/boothData.js";
+import { goodsMockup } from "../utils/goodsMockup.js";
 import { logTx } from "../systems/bankSystem.js";
 
 /* ============================================================
@@ -20,8 +21,16 @@ function loadArts() {
   try { const raw = localStorage.getItem(SAVE_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
 }
 
-// 배치물 스펙: 카탈로그 물품 또는 내 그림 포스터(사이즈 선택)
-const specFor = (p) => p.kind === "art" ? artPosterSpec(p.size) : catalogItem(p.refId);
+// 배치물 스펙: 카탈로그 물품 / 내 그림 포스터(사이즈 선택) / 제작 굿즈 전시
+const specFor = (p) => p.kind === "art" ? artPosterSpec(p.size) : p.kind === "goods" ? goodsDisplaySpec(p.gtype) : catalogItem(p.refId);
+
+// 굿즈 목업 이미지 (Canvas 자동 생성 → 비동기 로드)
+function GoodsImg({ goods, style }) {
+  const [url, setUrl] = useState(null);
+  const gid = goods && goods.id;
+  useEffect(() => { let a = true; if (goods) goodsMockup(goods).then(u => { if (a) setUrl(u); }); return () => { a = false; }; }, [gid]); // eslint-disable-line react-hooks/exhaustive-deps
+  return url ? <img src={url} alt="" draggable={false} style={style} /> : null;
+}
 // 존 안으로 중심좌표 클램프 (비율계: x=부스폭, y=BOOTH_VIEW_H)
 function clampToZoneW(c, x, y, boothW) {
   const z = zoneOf(c.zone);
@@ -70,8 +79,11 @@ export default function BoothPlannerApp({ state, setState }) {
   const [placed, setPlaced] = useState(() => {
     const l = state && state.boothLayout;
     const items = (l && l.version === 2 && Array.isArray(l.items)) ? l.items : [];
-    // 규격 변경(뷰 높이·존) 대비: 로드 시 각 물품을 자기 존 안으로 재클램프
-    return items.map(p => { const c = specFor(p); return c ? { ...p, ...clampToZoneW(c, p.x, p.y, BOOTH_WIDTHS[(state && state.boothSize) || "small"] || 120) } : null; }).filter(Boolean);
+    const goodsArr = (state && state.goods) || [];
+    // 규격 변경(뷰 높이·존) 대비 재클램프 + 재고 없어진 굿즈 전시물 제거
+    return items
+      .filter(p => p.kind !== "goods" || goodsArr.some(g => String(g.id) === String(p.refId) && g.stock > 0))
+      .map(p => { const c = specFor(p); return c ? { ...p, ...clampToZoneW(c, p.x, p.y, BOOTH_WIDTHS[(state && state.boothSize) || "small"] || 120) } : null; }).filter(Boolean);
   });
   const [selected, setSelected] = useState(null);
   const [cat, setCat] = useState("banner"); // 카테고리 id | "art"
@@ -85,10 +97,22 @@ export default function BoothPlannerApp({ state, setState }) {
   const arts = loadArts();
   const countOf = (refId) => placed.filter(p => p.kind === "item" && p.refId === refId).length;
   const posterCount = placed.filter(p => p.kind === "art").length;
+  // 제작 굿즈: 재고 있는 것만, 종류(굿즈 id)당 1개 전시. 직접 전시 안 하면 자동 전시.
+  const stockedGoods = ((state && state.goods) || []).filter(g => g.stock > 0);
+  const goodsById = (id) => stockedGoods.find(g => String(g.id) === String(id)) || null;
+  const placedGoodsIds = new Set(placed.filter(p => p.kind === "goods").map(p => String(p.refId)));
 
   const clampToZone = (c, x, y) => clampToZoneW(c, x, y, boothW);
 
   const addItem = (c) => {
+    if (cat === "goods") {
+      if (placedGoodsIds.has(String(c.id))) { setToast("이미 전시 중인 굿즈예요 (종류당 1개)"); return; }
+      const spec = goodsDisplaySpec(c.type);
+      const z = zoneOf(spec.zone);
+      const pos = clampToZone(spec, 0.5, (z.y0 + z.y1) / 2 / BOOTH_VIEW_H);
+      const inst = { iid: nextIid(), kind: "goods", refId: c.id, gtype: c.type, name: c.name, ...pos };
+      setPlaced(p => [...p, inst]); setSelected(inst.iid); return;
+    }
     if (cat === "art") {
       if (posterCount >= ART_POSTER_MAX) { setToast(`포스터는 최대 ${ART_POSTER_MAX}장까지!`); return; }
       const pos = clampToZone(artPosterSpec("a3"), 0.5, 0.4);
@@ -150,8 +174,20 @@ export default function BoothPlannerApp({ state, setState }) {
 
   const catalog = cat === "art"
     ? arts.map(a => ({ id: a.id, name: a.name || "그림", img: a.thumb, art: true }))
-    : BOOTH_CATALOG.filter(c => c.cat === cat);
+    : cat === "goods"
+      ? stockedGoods.map(g => ({ id: g.id, name: g.name, img: g.imageData, goods: true, type: g.type, stock: g.stock }))
+      : BOOTH_CATALOG.filter(c => c.cat === cat);
   const catInfo = BOOTH_CATS.find(x => x.id === cat);
+
+  // 자동 전시: 직접 전시하지 않은 재고 굿즈를 존별로 자동 배열 (저장 안 됨 — 항상 파생)
+  const autoInstances = (() => {
+    const autos = stockedGoods.filter(g => !placedGoodsIds.has(String(g.id)));
+    const mk = (arr, yR) => arr.map((g, i) => { const spec = goodsDisplaySpec(g.type); const n = arr.length; const x = n === 1 ? 0.5 : 0.13 + 0.74 * i / (n - 1); return { iid: "auto_" + g.id, kind: "goods", auto: true, refId: g.id, gtype: g.type, name: g.name, ...clampToZone(spec, x, yR) }; });
+    return [
+      ...mk(autos.filter(g => goodsDisplaySpec(g.type).zone === "table"), 0.77),
+      ...mk(autos.filter(g => goodsDisplaySpec(g.type).zone === "wall"), 0.60),
+    ];
+  })();
 
   // ── 스테이지 (실측 비율 부스 정면 뷰) — 렌더 함수 (컴포넌트 아님) ──
   const renderStage = (readonly) => {
@@ -172,16 +208,20 @@ export default function BoothPlannerApp({ state, setState }) {
           <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(frontZ), background: "#b1a3d1", borderTop: "2px solid #9d8dc0" }} />
           {/* 드래그 중 존 하이라이트 */}
           {!readonly && dragZone && <div style={{ position: "absolute", left: 0, right: 0, ...zonePct(zoneOf(dragZone)), background: "rgba(124,58,237,0.12)", border: "2px dashed rgba(124,58,237,0.55)", zIndex: 5, pointerEvents: "none", boxSizing: "border-box" }} />}
-          {/* 물품 */}
-          {placed.map(p => { const c = specOf(p); if (!c) return null;
+          {/* 물품 (자동 전시 굿즈는 맨 아래 레이어, 직접 배치가 위) */}
+          {[...autoInstances, ...placed].map(p => { const c = specOf(p); if (!c) return null;
             const rw = ((p.kind === "item" && c.fullWidth) ? boothW : c.w) / boothW * 100, rh = c.h / BOOTH_VIEW_H * 100;
+            const interactive = !readonly && !p.auto;
             return (
               <div key={p.iid}
-                onPointerDown={readonly ? undefined : (e) => onDown(e, p)} onPointerMove={readonly ? undefined : onMove} onPointerUp={readonly ? undefined : onUp}
-                style={{ position: "absolute", left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${rw}%`, height: `${rh}%`, transform: "translate(-50%,-50%)", touchAction: "none", cursor: readonly ? "default" : "move", userSelect: "none", zIndex: 10, outline: !readonly && selected === p.iid ? "2.5px solid #7c3aed" : "none", outlineOffset: 2, borderRadius: 4 }}>
+                onPointerDown={interactive ? (e) => onDown(e, p) : undefined} onPointerMove={interactive ? onMove : undefined} onPointerUp={interactive ? onUp : undefined}
+                style={{ position: "absolute", left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${rw}%`, height: `${rh}%`, transform: "translate(-50%,-50%)", touchAction: "none", cursor: interactive ? "move" : "default", userSelect: "none", zIndex: p.auto ? 8 : 10, outline: !readonly && selected === p.iid ? "2.5px solid #7c3aed" : "none", outlineOffset: 2, borderRadius: 4, pointerEvents: p.auto ? "none" : "auto" }}>
                 {p.kind === "art"
                   ? <img src={p.img} alt="" draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", border: "3px solid #fff", boxSizing: "border-box", borderRadius: 3, boxShadow: "0 3px 10px rgba(0,0,0,0.3)" }} />
-                  : <ItemVisual c={catalogItem(p.refId)} inst={p} genreName={genreName} />}
+                  : p.kind === "goods"
+                    ? <GoodsImg goods={goodsById(p.refId)} style={{ width: "100%", height: "100%", objectFit: "contain", display: "block" }} />
+                    : <ItemVisual c={catalogItem(p.refId)} inst={p} genreName={genreName} />}
+                {p.auto && !readonly && <span style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", fontSize: 8, padding: "1px 6px", borderRadius: 7, background: "rgba(13,13,26,0.65)", color: "#9a8fc0", whiteSpace: "nowrap", pointerEvents: "none" }}>자동</span>}
               </div>);
           })}
           {!readonly && placed.length === 0 && <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "#9a8fc0", fontSize: 14, pointerEvents: "none", textAlign: "center" }}>← 왼쪽 카탈로그에서 물품을 골라<br />부스를 꾸며보세요</div>}
@@ -212,6 +252,7 @@ export default function BoothPlannerApp({ state, setState }) {
                 <span style={{ color: l.buy ? "#9a8fc0" : "#06d6a0", flexShrink: 0 }}>{l.buy ? KRW(l.sum) : "무료"}</span>
               </div>))}
             {posterCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px dashed #2a2a4a", fontSize: 13 }}><span style={{ color: "#7a7a9a" }}>내 그림 포스터 ×{posterCount}</span><span style={{ color: "#06d6a0", fontSize: 12 }}>무료</span></div>}
+            {placed.filter(p => p.kind === "goods").length > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px dashed #2a2a4a", fontSize: 13 }}><span style={{ color: "#7a7a9a" }}>굿즈 직접 전시 ×{placed.filter(p => p.kind === "goods").length}</span><span style={{ color: "#06d6a0", fontSize: 12 }}>무료</span></div>}
             {!buyLines.length && !posterCount && <div style={{ color: "#555", fontSize: 12, padding: "12px 0" }}>배치된 부스 물품 없음</div>}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", borderTop: "2px solid #2a2a4a", marginTop: 8, fontSize: 16, fontWeight: 800 }}>
@@ -248,30 +289,36 @@ export default function BoothPlannerApp({ state, setState }) {
         {/* 좌: 카탈로그 */}
         <div style={{ width: 222, flexShrink: 0, borderRight: "1px solid #2a2a4a", background: "#0f0f24", display: "flex", flexDirection: "column", padding: 10, gap: 8 }}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 4 }}>
-            {[...BOOTH_CATS, { id: "art", name: "내 그림", icon: "🖼", color: "#9a8fc0" }].map(c => (
+            {[...BOOTH_CATS, { id: "goods", name: "굿즈", icon: "🧸", color: "#ffd166" }, { id: "art", name: "내 그림", icon: "🖼", color: "#9a8fc0" }].map(c => (
               <button key={c.id} onClick={() => setCat(c.id)} title={c.name} style={{ padding: "7px 0 5px", borderRadius: 8, border: `1px solid ${cat === c.id ? "#7c3aed" : "transparent"}`, cursor: "pointer", background: cat === c.id ? "#2a1a4a" : "#1a1a3a", display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
                 <span style={{ fontSize: 15 }}>{c.icon}</span><span style={{ fontSize: 8, fontWeight: 700, color: cat === c.id ? "#c084fc" : "#777" }}>{c.name}</span>
               </button>))}
           </div>
           <div style={{ fontSize: 10, color: "#666", lineHeight: 1.5, padding: "2px 2px 0" }}>
-            {cat === "art" ? `🖼 갤러리 그림을 뒷벽 포스터로 (A4~B2 크기 선택) · 최대 ${ART_POSTER_MAX}장` : `${catInfo.icon} ${catInfo.desc}`}
+            {cat === "art" ? `🖼 갤러리 그림을 뒷벽 포스터로 (A4~B2 크기 선택) · 최대 ${ART_POSTER_MAX}장`
+              : cat === "goods" ? "🧸 제작한 굿즈 직접 전시 (종류당 1개) · 안 하면 자동 전시"
+                : `${catInfo.icon} ${catInfo.desc}`}
           </div>
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
             {catalog.length ? catalog.map(c => {
-              const cnt = c.art ? posterCount : countOf(c.id);
-              const maxN = c.art ? ART_POSTER_MAX : c.max;
-              const full = c.art ? posterCount >= maxN : cnt >= maxN;
-              const own = c.art ? 0 : (inv[c.id] || 0);
+              const isGoods = !!c.goods;
+              const goodsPlaced = isGoods && placedGoodsIds.has(String(c.id));
+              const cnt = c.art ? posterCount : isGoods ? (goodsPlaced ? 1 : 0) : countOf(c.id);
+              const maxN = c.art ? ART_POSTER_MAX : isGoods ? 1 : c.max;
+              const full = cnt >= maxN;
+              const own = (c.art || isGoods) ? 0 : (inv[c.id] || 0);
+              const gspec = isGoods ? goodsDisplaySpec(c.type) : null;
               return (
-                <button key={c.id} onClick={() => addItem(c)} disabled={full && !c.art} style={{ display: "flex", alignItems: "center", gap: 9, padding: 8, borderRadius: 10, border: "1px solid #2a2a4a", background: "#12122a", cursor: full ? "not-allowed" : "pointer", textAlign: "left", opacity: full ? 0.45 : 1 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 8, background: "#0a0a18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, overflow: "hidden" }}>{c.art ? <img src={c.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : c.icon}</div>
+                <button key={c.id} onClick={() => addItem(c)} disabled={full} style={{ display: "flex", alignItems: "center", gap: 9, padding: 8, borderRadius: 10, border: "1px solid #2a2a4a", background: "#12122a", cursor: full ? "not-allowed" : "pointer", textAlign: "left", opacity: full ? 0.45 : 1 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: (c.art || isGoods) ? "#fff" : "#0a0a18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0, overflow: "hidden" }}>{(c.art || isGoods) ? <img src={c.img} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : c.icon}</div>
                   <div style={{ minWidth: 0, flex: 1 }}>
                     <div style={{ fontSize: 11.5, fontWeight: 700, color: "#e0e0ff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</div>
-                    <div style={{ fontSize: 10, color: "#9a8fc0" }}>{c.art ? "무료 배치" : <>{own >= (countOf(c.id) + 1) ? <span style={{ color: "#06d6a0" }}>보유 · 무료</span> : KRW(c.price)} · {c.w}×{c.h}cm</>}</div>
-                    {!c.art && <div style={{ fontSize: 9, color: "#666" }}>{zoneOf(c.zone).name} · <span style={{ color: cnt ? "#ffd166" : "#666" }}>{cnt}/{c.max}개</span></div>}
+                    <div style={{ fontSize: 10, color: "#9a8fc0" }}>{c.art ? "무료 배치" : isGoods ? <span style={{ color: goodsPlaced ? "#ffd166" : "#06d6a0" }}>{goodsPlaced ? "✓ 전시 중" : `재고 ${c.stock}개 · 무료 전시`}</span> : <>{own >= (countOf(c.id) + 1) ? <span style={{ color: "#06d6a0" }}>보유 · 무료</span> : KRW(c.price)} · {c.w}×{c.h}cm</>}</div>
+                    {!c.art && !isGoods && <div style={{ fontSize: 9, color: "#666" }}>{zoneOf(c.zone).name} · <span style={{ color: cnt ? "#ffd166" : "#666" }}>{cnt}/{c.max}개</span></div>}
+                    {isGoods && <div style={{ fontSize: 9, color: "#666" }}>{zoneOf(gspec.zone).name}에 전시</div>}
                   </div>
                 </button>);
-            }) : <div style={{ color: "#555", fontSize: 12, textAlign: "center", padding: 20 }}>저장된 그림이 없어요</div>}
+            }) : <div style={{ color: "#555", fontSize: 12, textAlign: "center", padding: 20 }}>{cat === "art" ? "저장된 그림이 없어요" : cat === "goods" ? "재고 있는 굿즈가 없어요\n(굿즈컴퍼니에서 제작하세요)" : "물품이 없어요"}</div>}
           </div>
         </div>
 
@@ -288,13 +335,17 @@ export default function BoothPlannerApp({ state, setState }) {
           </div>
           <div style={{ display: "flex", gap: 12, margin: "0 12px 12px", padding: 12, background: "#12122a", border: "1px solid #2a2a4a", borderRadius: 12, minHeight: 84, alignItems: "center" }}>
             {selInst ? (<>
-              <div style={{ width: 56, height: 56, borderRadius: 8, background: "#0a0a18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, overflow: "hidden" }}>
-                {selInst.kind === "art" ? <img src={selInst.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (selInst.artImg ? <img src={selInst.artImg} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : catalogItem(selInst.refId).icon)}
+              <div style={{ width: 56, height: 56, borderRadius: 8, background: selInst.kind === "goods" ? "#fff" : "#0a0a18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0, overflow: "hidden" }}>
+                {selInst.kind === "art" ? <img src={selInst.img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  : selInst.kind === "goods" ? <GoodsImg goods={goodsById(selInst.refId)} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    : (selInst.artImg ? <img src={selInst.artImg} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : catalogItem(selInst.refId).icon)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{selInst.kind === "art" ? `내 그림 포스터 · ${selInst.name}` : catalogItem(selInst.refId).name}</div>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{selInst.kind === "art" ? `내 그림 포스터 · ${selInst.name}` : selInst.kind === "goods" ? `굿즈 전시 · ${selInst.name}` : catalogItem(selInst.refId).name}</div>
                 <div style={{ fontSize: 11, color: "#9a8fc0", marginTop: 3 }}>
-                  {selInst.kind === "art" ? `${(ART_POSTER_SIZES.find(s => s.id === (selInst.size || "a3")) || {}).name || "A3"} 포스터 · 무료` : <>{catalogItem(selInst.refId).desc} · <span style={{ color: "#4cc9f0" }}>인지도 +{Math.round((catalogItem(selInst.refId).fameBonus || 0) * 100)}%</span> <span style={{ color: "#06d6a0" }}>판매율 +{Math.round((catalogItem(selInst.refId).sellBonus || 0) * 100)}%</span> (개당)</>}
+                  {selInst.kind === "art" ? `${(ART_POSTER_SIZES.find(s => s.id === (selInst.size || "a3")) || {}).name || "A3"} 포스터 · 무료`
+                    : selInst.kind === "goods" ? `재고 ${(goodsById(selInst.refId) || {}).stock || 0}개 · 종류당 1개 전시 · 무료 (전시 안 하면 자동 배치)`
+                      : <>{catalogItem(selInst.refId).desc} · <span style={{ color: "#4cc9f0" }}>인지도 +{Math.round((catalogItem(selInst.refId).fameBonus || 0) * 100)}%</span> <span style={{ color: "#06d6a0" }}>판매율 +{Math.round((catalogItem(selInst.refId).sellBonus || 0) * 100)}%</span> (개당)</>}
                 </div>
               </div>
               {/* 포스터 크기 선택 */}
@@ -323,13 +374,16 @@ export default function BoothPlannerApp({ state, setState }) {
           <div style={{ fontSize: 13, fontWeight: 800, color: "#ffd166", marginBottom: 8 }}>📋 배치된 물품 ({placed.length})</div>
           <div style={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column", gap: 5 }}>
             {placed.length ? [...placed].reverse().map(p => { const c = p.kind === "item" ? catalogItem(p.refId) : null;
+              const icon = p.kind === "art" ? "🖼" : p.kind === "goods" ? "🧸" : (c && c.icon);
+              const nm = p.kind === "item" ? (c && c.name) : p.name;
               return (
                 <button key={p.iid} onClick={() => setSelected(p.iid)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 8px", borderRadius: 8, border: `1px solid ${selected === p.iid ? "#7c3aed" : "#2a2a4a"}`, background: selected === p.iid ? "#2a1a4a" : "#12122a", cursor: "pointer", textAlign: "left" }}>
-                  <span style={{ fontSize: 16, width: 22, textAlign: "center", flexShrink: 0 }}>{p.kind === "art" ? "🖼" : c.icon}</span>
-                  <span style={{ fontSize: 11.5, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#c7c0e0" }}>{p.kind === "art" ? p.name : c.name}</span>
+                  <span style={{ fontSize: 16, width: 22, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+                  <span style={{ fontSize: 11.5, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#c7c0e0" }}>{nm}</span>
                   <span style={{ fontSize: 15, color: "#e94560", cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); removeItem(p.iid); }}>×</span>
                 </button>);
             }) : <div style={{ color: "#555", fontSize: 12, textAlign: "center", padding: 16 }}>아직 배치한 물품이 없어요</div>}
+            {autoInstances.length > 0 && <div style={{ fontSize: 10, color: "#666", padding: "6px 2px", lineHeight: 1.5 }}>🧸 자동 전시 {autoInstances.length}개 — 직접 배치하지 않은 재고 굿즈는 알아서 진열돼요</div>}
           </div>
           <div style={{ borderTop: "1px solid #2a2a4a", marginTop: 8, paddingTop: 10 }}>
             <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
