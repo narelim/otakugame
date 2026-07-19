@@ -8,8 +8,8 @@ import { pushMessage } from "./messageSystem.js";
    - 프리미엄 매물: 절판 공식 굿즈가 일일 로테이션(시드 결정적)으로 올라옴 → 덕질장 구멍 메우기
    - 특가 매물: 싸지만 가품 리스크 (사기꾼)
    - 양도 티켓: 피켓팅 실패 시 프리미엄 가격으로 등장 (fanEventSystem 연동)
-   - 내 재고 떨이: 이월 재고를 45%에 즉시 처분 (이월 멘탈 타격의 해소 선택지)
-   - 중복 수집품 처분: 스택 초과분을 시세 25%에
+   - 내 재고 떨이: 이월 재고를 원가 60%에 즉시 처분 (이월 멘탈 타격의 해소 선택지 — 손절)
+   - 중복 수집품 처분: 스택 초과분을 시세 10%에
    ============================================================ */
 
 export const PRICE_BASE = { N: 12000, R: 26000, SR: 62000, SSR: 150000 };
@@ -52,22 +52,27 @@ export function buyListing(s, l) {
   return pushMessage(ns, { from: "메루마켓", avatar: "♻️", text: `[거래 완료] ${l.item.name} 도착! 포장이 야무지다 👍 덕질장에 등록됐어요.` });
 }
 
-// 이월 재고 떨이: 해당 굿즈 전량을 45%에 즉시 판매 (재고가 사라져 속이 시원 → 멘탈 +3)
+// 이월 재고 떨이: 해당 굿즈 전량을 원가의 60%에 즉시 처분 — 확실한 손절 (재고가 사라져 속이 시원 → 멘탈 +3)
+// 주의: 판매가 기준으로 잡으면 원가(판매가의 20~40%)를 넘어 "제작→즉시 떨이" 무한 차익이 열린다
+export const CLEARANCE_RATE = 0.6; // 원가 대비 회수율
+export function stockClearancePay(g) { const unit = g.cost != null ? g.cost : Math.round((g.price || 0) * 0.2); return Math.max(100, Math.round(g.stock * unit * CLEARANCE_RATE / 100) * 100); }
 export function sellStock(s, goodsId) {
   const g = (s.goods || []).find(x => String(x.id) === String(goodsId));
   if (!g || g.stock <= 0) return s;
-  const pay = Math.max(100, Math.round(g.stock * g.price * 0.45 / 100) * 100);
+  const pay = stockClearancePay(g);
   let ns = { ...s, goods: s.goods.filter(x => x !== g), mentalHealth: Math.min(100, (s.mentalHealth || 0) + 3) };
   ns = logTx(ns, pay, `메루마켓 떨이 · ${g.name} ${g.stock}개`, "📦", "market");
   return pushMessage(ns, { from: "메루마켓", avatar: "♻️", text: `[판매 완료] ${g.name} ${g.stock}개가 떨이로 나갔다 (+₩${pay.toLocaleString()}) 재고 박스가 사라지니 속이 다 시원하다!` });
 }
 
-// 중복 수집품 처분: 스택 초과분(count-1)을 시세 25%에
+// 중복 수집품 처분: 스택 초과분(count-1)을 시세 10%에
+// 주의: 25%였을 땐 가챠 기대가치(뽑기당 시세 ₩27,435)의 환전이 단가(₩2,700)를 넘어 "가챠→중복팔이" 무한 골드가 열렸음. 10% ≈ 손익 0
+export const DUPE_RATE = 0.10;
 export function sellDupe(s, ci) {
   const it = (s.collection || [])[ci];
   if (!it || (it.count || 1) < 2) return s;
   const n = it.count - 1;
-  const pay = Math.max(100, Math.round((PRICE_BASE[it.rarity] || 12000) * 0.25 * n / 100) * 100);
+  const pay = Math.max(100, Math.round((PRICE_BASE[it.rarity] || 12000) * DUPE_RATE * n / 100) * 100);
   const col = s.collection.map((x, i) => i === ci ? { ...x, count: 1 } : x);
   let ns = { ...s, collection: col };
   return logTx(ns, pay, `메루마켓 · ${it.name} 중복 ${n}개 처분`, "♻️", "market");

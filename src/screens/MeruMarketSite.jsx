@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { marketListings, buyListing, boughtToday, sellStock, sellDupe, PRICE_BASE } from "../systems/marketSystem.js";
+import { marketListings, buyListing, boughtToday, sellStock, sellDupe, stockClearancePay, PRICE_BASE, DUPE_RATE } from "../systems/marketSystem.js";
 import { rarityOf } from "../systems/collectionSystem.js";
 import { OfficialImg } from "./phoneApps.jsx";
 import { GoodsImg } from "../components/BoothStage.jsx";
@@ -71,7 +71,7 @@ export default function MeruMarketSite({ state, setState }) {
 
         {/* ── 내 재고 팔기 ── */}
         {tab === "sell" && <>
-          <div style={{ fontSize: 11, color: "#7a9a90", marginBottom: 12 }}>이월 재고를 시세 45%에 즉시 떨이 — 재고 박스가 사라지면 마음도 가벼워져요 (멘탈 +3)</div>
+          <div style={{ fontSize: 11, color: "#7a9a90", marginBottom: 12 }}>이월 재고를 원가의 60%에 즉시 떨이 (손절) — 재고 박스가 사라지면 마음도 가벼워져요 (멘탈 +3)</div>
           {!stock.length && <div style={{ ...card, padding: 40, textAlign: "center", color: "#9ab5ab", fontSize: 13 }}>팔 재고가 없어요. 완판의 증거! 👍</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {stock.map(g => (
@@ -79,7 +79,7 @@ export default function MeruMarketSite({ state, setState }) {
                 <div style={{ width: 52, height: 52, flexShrink: 0 }}><GoodsImg goods={g} style={{ width: "100%", height: "100%", objectFit: "contain" }} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 14, fontWeight: 800 }}>{g.name} <span style={{ fontSize: 11, color: "#7a9a90", fontWeight: 400 }}>재고 {g.stock}개 · 정가 {KRW(g.price)}</span></div>
-                  <div style={{ fontSize: 11, color: "#0a8a6a", marginTop: 3 }}>떨이 예상가 {KRW(Math.max(100, Math.round(g.stock * g.price * 0.45 / 100) * 100))}</div>
+                  <div style={{ fontSize: 11, color: "#0a8a6a", marginTop: 3 }}>떨이 예상가 {KRW(stockClearancePay(g))}</div>
                 </div>
                 <button onClick={() => setConfirm({ kind: "stock", g })} style={{ padding: "10px 20px", borderRadius: 10, border: "none", background: MINT, color: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", flexShrink: 0 }}>전량 떨이</button>
               </div>))}
@@ -88,12 +88,12 @@ export default function MeruMarketSite({ state, setState }) {
 
         {/* ── 중복 처분 ── */}
         {tab === "dupe" && <>
-          <div style={{ fontSize: 11, color: "#7a9a90", marginBottom: 12 }}>덕질장의 중복 수집품(×2 이상)을 시세 25%에 처분 — 1개는 소장용으로 남겨둬요</div>
+          <div style={{ fontSize: 11, color: "#7a9a90", marginBottom: 12 }}>덕질장의 중복 수집품(×2 이상)을 시세 {Math.round(DUPE_RATE * 100)}%에 처분 — 1개는 소장용으로 남겨둬요</div>
           {!dupes.length && <div style={{ ...card, padding: 40, textAlign: "center", color: "#9ab5ab", fontSize: 13 }}>중복 수집품이 없어요</div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {dupes.map(({ it, i }) => {
               const n = it.count - 1;
-              const pay = Math.max(100, Math.round((PRICE_BASE[it.rarity] || 12000) * 0.25 * n / 100) * 100);
+              const pay = Math.max(100, Math.round((PRICE_BASE[it.rarity] || 12000) * DUPE_RATE * n / 100) * 100);
               return (
                 <div key={i} style={{ ...card, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{ width: 52, height: 52, flexShrink: 0 }}><OfficialImg item={it} style={{ width: "100%", height: "100%", objectFit: "contain" }} /></div>

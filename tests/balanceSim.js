@@ -94,11 +94,11 @@ export function runSim(persona, DAYS = 200) {
         if (s.gold !== before || need < 50) orderedFor.add(ae.id);
       }
     }
-    // ── 덕질 일정: 오늘이 팬 이벤트면 간다 (여유 있을 때) ──
+    // ── 덕질 일정: 오늘이 팬 이벤트면 간다 (여유 있을 때). persona.fanEvents=false면 아예 안 하는 유저 ──
     const fe = todaysFanEvent(s);
-    if (fe && !isEventDay(s) && s.gold > fe.cost + 8000 && (s.actionsToday || 0) < 2) s = attendFanEvent(s);
+    if (persona.fanEvents !== false && fe && !isEventDay(s) && s.gold > fe.cost + 8000 && (s.actionsToday || 0) < 2) s = attendFanEvent(s);
     // ── 티켓팅 오픈일이면 도전 ──
-    if (canTicket(s)) { const r = Math.random(); s = resolveTicketing(s, r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7).state; }
+    if (persona.fanEvents !== false && canTicket(s)) { const r = Math.random(); s = resolveTicketing(s, r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7).state; }
     // ── 응모는 공짜니까 무조건 ──
     if (s.raffleOffer) s = enterRaffle(s);
     // ── 양도 티켓·가챠·프리미엄 매물 (지름형 머니싱크) ──
@@ -142,8 +142,8 @@ export function runSim(persona, DAYS = 200) {
         note.lastSoldOut = sim.soldResults.some(r => r.sold > 0 && r.remaining === 0);
       }
       s = commitEventResult(s, sim); note.events++;
-      // 이월 재고는 메루마켓 떨이로 정리 (밸런스 루프: 이월 멘탈 타격 ↔ 45% 손절)
-      if (persona.sellLeftovers) { for (const g of [...(s.goods || [])]) s = sellStock(s, g.id); }
+      // 이월 재고 떨이는 이제 손절(원가 60% 회수) — 멘탈 짐이 무거울 때만 정리하는 게 그럴듯한 플레이
+      if (persona.sellLeftovers && s.mentalHealth < 65) { for (const g of [...(s.goods || [])]) s = sellStock(s, g.id); }
     } else {
       s = advanceDay(s); s = { ...s, pendingSnsEvent: null };
     }

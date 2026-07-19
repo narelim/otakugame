@@ -283,16 +283,16 @@ describe("백로그: 가챠·메루마켓·티켓팅·응모", () => {
     expect(boughtToday(s, item.key)).toBe(true);
     expect(s.collection.length).toBe(1); // 진품은 덕질장으로
     expect(s.stats.spend.market).toBe(item.price);
-    // 재고 떨이: 40개 × ₩1,500 × 45% = ₩27,000
-    s = { ...s, goods: [{ id: 9, type: "postcard", name: "엽서", price: 1500, stock: 40, baseImage: "x", imageData: "x" }] };
+    // 재고 떨이(손절): 40개 × 원가 ₩300 × 60% = ₩7,200 — 원가 미만 회수라 제작→떨이 차익 불가
+    s = { ...s, goods: [{ id: 9, type: "postcard", name: "엽서", price: 1500, cost: 300, stock: 40, baseImage: "x", imageData: "x" }] };
     s = sellStock(s, 9);
     expect(s.goods.length).toBe(0);
-    expect(s.stats.earn.market).toBe(27000);
-    // 중복 처분: N급 ×3 → 2개 × 12,000 × 25% = ₩6,000
+    expect(s.stats.earn.market).toBe(7200);
+    // 중복 처분: N급 ×3 → 2개 × 12,000 × 10% = ₩2,400 — 가챠 단가(₩2,700)보다 낮아 환전 루프 불가
     s = { ...s, collection: [{ char: "카일", type: "badge", motif: "heart", rarity: "N", name: "카일 하트 캔뱃지", count: 3 }] };
     s = sellDupe(s, 0);
     expect(s.collection[0].count).toBe(1);
-    expect(s.stats.earn.market).toBe(27000 + 6000);
+    expect(s.stats.earn.market).toBe(7200 + 2400);
   });
   it("티켓팅: 풀퍼펙트는 확정 성공 → 캘린더 등록, 참석/놓침", () => {
     let s = newState();
