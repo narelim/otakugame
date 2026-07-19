@@ -5,6 +5,7 @@ import { processDailyEvents, applyEventDelta, nextGameDate } from "./snsEventSys
 import { pushMessage } from "./messageSystem.js";
 import { processPayday, getJob, isWorkdayToday } from "./jobSystem.js";
 import { maybeOfferCommission, expireCommission } from "./commissionSystem.js";
+import { maybeOfferTicketing, expireTicketing, maybeOfferRaffle, resolveRaffle, missFanEvents } from "./fanEventSystem.js";
 
 export function resolveEventName(type,genre){const c=buildVarCtx(genre);return (type.name||"").replace(/\{장르명\}/g,c.gname).replace(/\{cp명\}/g,c.cpName);}
 export function eventWeekendDay(day){for(let i=0;i<14;i++){const w=(day+i)%7;if(w===6)return {day:day+i,dow:"sat"};if(w===0)return {day:day+i,dow:"sun"};}return {day,dow:"sat"};}
@@ -46,6 +47,12 @@ export function endOfDay(s){
   // 커미션: 기한 만료 처리 → 새 의뢰 도착 확률 (월급 전 부수익 루트)
   ns=expireCommission(ns);
   ns=maybeOfferCommission(ns);
+  // 덕질 일정: 티켓팅 만료/공지, 응모 공지/결과 발표, 놓친 팬 이벤트 정리
+  ns=expireTicketing(ns);
+  ns=maybeOfferTicketing(ns);
+  ns=maybeOfferRaffle(ns);
+  ns=resolveRaffle(ns);
+  ns=missFanEvents(ns);
   return ns;
 }
 // 하루 진행(취침/실시간 공용): 주문완료 + 날짜 + 이벤트(라인업>D-day알림>랜덤)

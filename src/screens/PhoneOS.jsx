@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import MaboApp from "./maboApp.jsx";
+import GachaApp from "./GachaApp.jsx";
 import { MessagesApp, GalleryApp, JobcatApp, BankApp, FactoryStatusApp, CalendarApp, CollectionApp } from "./phoneApps.jsx";
 import { unreadCount, markThreadRead } from "../systems/messageSystem.js";
 import { isEventDay } from "../systems/eventSystem.js";
@@ -21,6 +22,7 @@ const APPS=[
   {id:"bank",    icon:"🏦",name:"은행",      color:"#4a86e8"},
   {id:"factory", icon:"🏭",name:"굿즈팩토리", color:"#e94560"},
   {id:"collection",icon:"🎀",name:"덕질장",  color:"#ff8fb0"},
+  {id:"gacha",   icon:"🎰",name:"가챠",      color:"#9b30c9"},
   {id:"calendar",icon:"📅",name:"캘린더",    color:"#c084fc"},
 ];
 
@@ -95,6 +97,7 @@ export default function PhoneOS({state,setState,onClose}){
   else if(top.app==="bank")content=<BankApp state={state}/>;
   else if(top.app==="factory")content=<FactoryStatusApp state={state}/>;
   else if(top.app==="collection")content=<CollectionApp state={state}/>;
+  else if(top.app==="gacha")content=<GachaApp state={state} setState={setState}/>;
   else if(top.app==="calendar")content=<CalendarApp state={state}/>;
 
   return(<div style={{width:"100%",height:"100%",display:"flex",flexDirection:"column",background:"#0a0a18",border:"1.5px solid #2a2a4a",borderRadius:"30px",overflow:"hidden",boxShadow:"0 24px 70px rgba(0,0,0,0.7)"}}>

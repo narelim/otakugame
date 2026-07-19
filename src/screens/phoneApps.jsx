@@ -268,7 +268,7 @@ export function FactoryStatusApp({state}){
 
 /* ── 덕질장 (기본 앱): 공식 굿즈 컬렉션 북 ── */
 const RAR_ORDER={SSR:3,SR:2,R:1,N:0};
-function OfficialImg({item,style}){
+export function OfficialImg({item,style}){
   const [url,setUrl]=useState(null);
   const k=item&&(item.seed+":"+item.type);
   useEffect(()=>{let a=true;if(item)officialMockup(item).then(u=>{if(a)setUrl(u);});return()=>{a=false;};},[k]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -365,13 +365,14 @@ export function CalendarApp({state}){
             <span style={{fontSize:"11px",fontWeight:isToday?"900":"700",color:w===0?"#e94560":w===6?"#4a86e8":"#e0e0ff"}}>{d}</span>
             <span style={{display:"flex",gap:"2px",height:"6px",alignItems:"center"}}>
               {fairs.length>0&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:hasApplied?"#ffd166":"#e94560"}}/>}
+              {(state.fanEvents||[]).some(f=>f.day===abs)&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:"#ff8fb0"}}/>}
               {!!job&&job.workDays.includes(w)&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:"#ff9f43"}}/>}
               {isPay&&<span style={{width:"5px",height:"5px",borderRadius:"50%",background:"#06d6a0"}}/>}
             </span>
           </button>);})}
       </div>
       <div style={{display:"flex",gap:"12px",margin:"10px 2px 12px",fontSize:"9px",color:"#666"}}>
-        <span>● <span style={{color:"#e94560"}}>행사</span></span><span>● <span style={{color:"#ffd166"}}>신청한 행사</span></span><span>● <span style={{color:"#ff9f43"}}>근무일</span></span><span>● <span style={{color:"#06d6a0"}}>월급날</span></span>
+        <span>● <span style={{color:"#e94560"}}>행사</span></span><span>● <span style={{color:"#ffd166"}}>신청</span></span><span>● <span style={{color:"#ff8fb0"}}>덕질</span></span><span>● <span style={{color:"#ff9f43"}}>근무</span></span><span>● <span style={{color:"#06d6a0"}}>월급</span></span>
       </div>
       {selD!=null&&<div style={{padding:"12px",background:"#12122a",border:"1px solid #2a2a4a",borderRadius:"12px"}}>
         <div style={{fontSize:"12px",fontWeight:"800",color:"#c084fc",marginBottom:"8px"}}>{viewMonth}월 {selD}일 {selAbs===state.day?"(오늘)":selAbs>state.day?`(D-${selAbs-state.day})`:"(지남)"}</div>
@@ -380,6 +381,8 @@ export function CalendarApp({state}){
           <span style={{fontSize:"15px"}}>🎪</span>
           <div style={{flex:1,minWidth:0}}><div style={{fontSize:"12px",fontWeight:"700"}}>{e.name}</div><div style={{fontSize:"9px",color:"#666"}}>{e.days===2?"양일":"하루"}{appliedIds.has(e.id)?" · ⭐ 신청함":e.requiresApplication?` · 접수 마감 Day ${e.applyBy}`:""}</div></div>
         </div>))}
+        {(state.fanEvents||[]).filter(f=>f.day===selAbs).map((f,i)=>(<div key={"fe"+i} style={{display:"flex",gap:"8px",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #1a1a30"}}><span style={{fontSize:"15px"}}>{f.icon||"💖"}</span><div style={{flex:1,minWidth:0}}><div style={{fontSize:"12px",fontWeight:"700",color:"#ff8fb0"}}>{f.name}</div><div style={{fontSize:"9px",color:"#666"}}>덕질 일정 · 예산 ₩{(f.cost||0).toLocaleString()} · 못 가면 슬퍼요</div></div></div>))}
+        {state.ticketing&&state.ticketing.openDay===selAbs&&<div style={{display:"flex",gap:"8px",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #1a1a30"}}><span style={{fontSize:"15px"}}>🎫</span><div style={{fontSize:"12px",fontWeight:"700",color:"#e94560"}}>『{state.ticketing.name}』 티켓팅 오픈!</div></div>}
         {state.job&&selD===PAYDAY&&<div style={{display:"flex",gap:"8px",alignItems:"center",padding:"7px 0"}}><span style={{fontSize:"15px"}}>💼</span><div style={{fontSize:"12px",fontWeight:"700",color:"#06d6a0"}}>월급날</div></div>}
       </div>}
       <div style={{marginTop:"12px",fontSize:"10px",color:"#444",textAlign:"center",lineHeight:1.7}}>🚧 최애 생일·생일카페·팝업 같은 덕질 일정 추가는 준비 중!<br/>덕질 일정과 행사가 겹치는 날엔... 선택이 필요해질 거예요.</div>

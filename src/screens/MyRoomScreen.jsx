@@ -5,6 +5,7 @@ import { isEventDay, nearestUpcomingEvent } from "../systems/eventSystem.js";
 import { getJob, isWorkdayToday, hasWorkedToday } from "../systems/jobSystem.js";
 import { canPackToday, doPack, PACK_JOB } from "../systems/packingSystem.js";
 import { doCommission, COMMISSION_JOB } from "../systems/commissionSystem.js";
+import { canTicket, resolveTicketing, TICKET_JOB, enterRaffle, todaysFanEvent, attendFanEvent } from "../systems/fanEventSystem.js";
 import { unreadCount } from "../systems/messageSystem.js";
 import WorkGame from "../components/WorkGame.jsx";
 import { GoodsImg } from "../components/BoothStage.jsx";
@@ -165,7 +166,9 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
           </div>
         </Hotspot>}
         {/* 폰 스탠드 */}
-        <Hotspot x="70%" y="34%" w="14%" h="24%" label="핸드폰" icon="📱" onClick={() => openMenu("📱 핸드폰", [
+        <Hotspot x="70%" y="34%" w="14%" h="24%" label="핸드폰" icon="📱" pulse={canTicket(state) || !!state.raffleOffer} onClick={() => openMenu("📱 핸드폰", [
+          ...(canTicket(state) ? [{ icon: "🎫", label: `티켓팅 도전! 『${state.ticketing.name}』`, desc: "오늘 정오 오픈 · 광클 타이밍 승부 · 행동 1 소요", run: () => { setMenu(null); setMinigame("ticket"); } }] : []),
+          ...(state.raffleOffer ? [{ icon: "🎁", label: "응모 이벤트 참여 (무료 · 원클릭)", desc: "결과는 며칠 뒤 메시지로 도착", run: () => { setMenu(null); setState(s => enterRaffle(s)); setToast({ text: "🎁 응모 완료! 두근두근...", type: "good" }); } }] : []),
           { icon: "📱", label: "폰 열기 (앱 사용)", desc: unread ? `안 읽은 메시지 ${unread}개` : "SNS·알바냥·은행…", run: () => { setMenu(null); setPhoneOpen(true); } },
           { icon: "📱", label: A("shorts").name, desc: `${A("shorts").desc} (멘탈 +${A("shorts").mental}·체력 ${A("shorts").stamina})`, run: () => run(A("shorts")) },
           { icon: "🎉", label: A("official").name, desc: "공식이 우릴 먹여살린다! (확률)", run: () => run(A("official")) },
@@ -197,9 +200,17 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
       </div>
 
       {/* ── 현관문 (외출/행사장) ── */}
-      <Hotspot x="87.5%" y="10%" w="10.5%" h="58%" label={eventDay ? "행사장으로 출발!" : "외출하기"} icon={eventDay ? "🎪" : "🚪"} pulse={eventDay} onClick={() => {
+      <Hotspot x="87.5%" y="10%" w="10.5%" h="58%" label={eventDay ? "행사장으로 출발!" : todaysFanEvent(state) ? `오늘 『${todaysFanEvent(state).name}』!` : "외출하기"} icon={eventDay ? "🎪" : todaysFanEvent(state) ? "💖" : "🚪"} pulse={eventDay || !!todaysFanEvent(state)} onClick={() => {
         if (eventDay) { onGoEvent && onGoEvent(); return; }
+        const fe = todaysFanEvent(state);
         openMenu("🚪 외출", [
+          ...(fe ? [{ icon: fe.icon || "💖", label: `${fe.name} 가기 (₩${(fe.cost || 0).toLocaleString()} · 행동 1)`, desc: "오늘이 그날! 안 가면 표가 아깝다... (현장 한정 굿즈 확률)", run: () => {
+            setMenu(null);
+            if ((state.actionsToday || 0) >= ACT_MAX) { setToast({ text: "오늘 행동을 다 썼어요... 이대로면 못 간다!", type: "bad" }); return; }
+            if ((state.gold || 0) < fe.cost) { setToast({ text: `지갑이 가볍다... (₩${fe.cost.toLocaleString()} 필요)`, type: "bad" }); return; }
+            setState(s => attendFanEvent(s));
+            setToast({ text: `${fe.icon || "💖"} 『${fe.name}』 최고였다...!! 오늘을 위해 살았다 (멘탈 +${fe.mental})`, type: "good" });
+          } }] : []),
           { icon: "🏃", label: A("exercise").name, desc: `${A("exercise").desc} · 체력 +${A("exercise").stamina} 멘탈 +${A("exercise").mental}`, run: () => run(A("exercise")) },
           { icon: "☕", label: A("collab").name, desc: `${A("collab").desc} (-₩5,000)`, run: () => run(A("collab")) },
           ...(job && workToday ? [{ icon: "🐱", label: `알바 출근은 폰으로!`, desc: `오늘 ${job.name} 근무일 — 📱 알바냥 앱에서 출근`, run: () => { setMenu(null); setPhoneOpen(true); } }] : []),
@@ -252,13 +263,18 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
       {/* ── 포장/커미션 미니게임 ── */}
       {minigame && <div style={{ position: "absolute", inset: 0, zIndex: 85, background: "rgba(5,5,15,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ width: 380, height: 520, borderRadius: 20, overflow: "hidden", border: "1px solid #3a3a6a", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
-          <WorkGame job={minigame === "pack" ? PACK_JOB : COMMISSION_JOB}
-            subtitle={minigame === "pack" ? "행사 전날 · 내 방" : `${state.commission ? state.commission.from : ""}님 의뢰 작업 중`}
-            doneLabel={minigame === "pack" ? "📦 포장 끝! (행동 1 소요)" : "🎨 납품하기 (행동 1 소요)"}
+          <WorkGame job={minigame === "pack" ? PACK_JOB : minigame === "ticket" ? TICKET_JOB : COMMISSION_JOB}
+            subtitle={minigame === "pack" ? "행사 전날 · 내 방" : minigame === "ticket" ? `『${state.ticketing ? state.ticketing.name : ""}』 서버 오픈!` : `${state.commission ? state.commission.from : ""}님 의뢰 작업 중`}
+            doneLabel={minigame === "pack" ? "📦 포장 끝! (행동 1 소요)" : minigame === "ticket" ? "🎫 결제 시도!! (행동 1 소요)" : "🎨 납품하기 (행동 1 소요)"}
             cancelLabel="나중에"
             onCancel={() => setMinigame(null)}
             onDone={(mult, label) => {
               if (minigame === "pack") { setState(s => doPack(s, mult)); setToast({ text: `📦 포장 완료! ${label} — 내일 행사가 든든하다`, type: "good" }); }
+              else if (minigame === "ticket") {
+                const r = resolveTicketing(state, mult);
+                setState(() => r.state);
+                setToast(r.ok ? { text: `🎫 예매 성공!! 『${r.ticket.name}』 캘린더 확인!`, type: "good" } : { text: "🎫 서버가 터졌다... 예매 실패 (메루마켓에 양도표가 뜰지도)", type: "bad" });
+              }
               else { const pay = Math.max(1000, Math.round((state.commission ? state.commission.amount : 0) * mult / 100) * 100); setState(s => doCommission(s, mult)); setToast({ text: `🎨 커미션 납품! ${label} +₩${pay.toLocaleString()}`, type: "good" }); }
               setMinigame(null);
             }} />

@@ -5,6 +5,9 @@ import { performAction } from "../src/systems/dailySystem.js";
 import { applyForJob, workShift, isWorkdayToday, hasWorkedToday, getJob } from "../src/systems/jobSystem.js";
 import { canPackToday, doPack } from "../src/systems/packingSystem.js";
 import { canWorkCommission, doCommission } from "../src/systems/commissionSystem.js";
+import { canTicket, resolveTicketing, enterRaffle, todaysFanEvent, attendFanEvent } from "../src/systems/fanEventSystem.js";
+import { marketListings, buyListing, sellStock } from "../src/systems/marketSystem.js";
+import { doGacha } from "../src/systems/gachaSystem.js";
 import { myPostTemplates, canPostToday, publishMyPost } from "../src/systems/myPostSystem.js";
 import { logTx } from "../src/systems/bankSystem.js";
 
@@ -91,6 +94,17 @@ export function runSim(persona, DAYS = 200) {
         if (s.gold !== before || need < 50) orderedFor.add(ae.id);
       }
     }
+    // ── 덕질 일정: 오늘이 팬 이벤트면 간다 (여유 있을 때) ──
+    const fe = todaysFanEvent(s);
+    if (fe && !isEventDay(s) && s.gold > fe.cost + 8000 && (s.actionsToday || 0) < 2) s = attendFanEvent(s);
+    // ── 티켓팅 오픈일이면 도전 ──
+    if (canTicket(s)) { const r = Math.random(); s = resolveTicketing(s, r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7).state; }
+    // ── 응모는 공짜니까 무조건 ──
+    if (s.raffleOffer) s = enterRaffle(s);
+    // ── 양도 티켓·가챠·프리미엄 매물 (지름형 머니싱크) ──
+    if (persona.spendy && s.scalperTicket) { const l = marketListings(s).find(x => x.ticket); if (l && s.gold > l.price + 30000) s = buyListing(s, l); }
+    if (persona.spendy && s.gold > 150000 && Math.random() < 0.25) s = doGacha(s, 10).state;
+    if (persona.spendy && s.gold > 250000 && Math.random() < 0.25) { const l = marketListings(s).find(x => x.item && !x.fake && x.price <= s.gold - 200000); if (l) s = buyListing(s, l); }
     // ── 포장 (행사 D-1 최우선 — 행동 1 소요) ──
     if (canPackToday(s)) { const r = Math.random(); s = doPack(s, r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7); }
     // ── 알바 출근 (행동 1 소요) ──
@@ -128,6 +142,8 @@ export function runSim(persona, DAYS = 200) {
         note.lastSoldOut = sim.soldResults.some(r => r.sold > 0 && r.remaining === 0);
       }
       s = commitEventResult(s, sim); note.events++;
+      // 이월 재고는 메루마켓 떨이로 정리 (밸런스 루프: 이월 멘탈 타격 ↔ 45% 손절)
+      if (persona.sellLeftovers) { for (const g of [...(s.goods || [])]) s = sellStock(s, g.id); }
     } else {
       s = advanceDay(s); s = { ...s, pendingSnsEvent: null };
     }
@@ -153,8 +169,8 @@ export function report(name, { s, series, note }) {
   console.log(line("인지", p => p.fame));
   console.log(line("팔로", p => p.fol));
   console.log(`행사 ${note.events}회 (평균 수익 ₩${note.events ? Math.round((earn.event || 0) / note.events).toLocaleString() : 0}) · 완판 ${note.sellouts}/${note.goodsKinds}종 · 최저골드 ₩${note.minGold.toLocaleString()}(Day ${note.minGoldDay}) · 골드<3천 ${note.broke}일 · 멘탈<30 ${note.lowMental}일 · 체력<20 ${note.lowStamina}일`);
-  console.log(`수입: 행사 ₩${(earn.event || 0).toLocaleString()} · 월급 ₩${(earn.job || 0).toLocaleString()} · 커미션 ₩${(earn.commission || 0).toLocaleString()} · 기타 ₩${(earn.etc || 0).toLocaleString()}`);
-  console.log(`지출: 굿즈 ₩${(spend.goods || 0).toLocaleString()} · 행사비 ₩${(spend.event || 0).toLocaleString()} · 일상 ₩${(spend.daily || 0).toLocaleString()} · 부스 ₩${(spend.booth || 0).toLocaleString()}`);
+  console.log(`수입: 행사 ₩${(earn.event || 0).toLocaleString()} · 월급 ₩${(earn.job || 0).toLocaleString()} · 커미션 ₩${(earn.commission || 0).toLocaleString()} · 마켓 ₩${(earn.market || 0).toLocaleString()}`);
+  console.log(`지출: 굿즈 ₩${(spend.goods || 0).toLocaleString()} · 행사비 ₩${(spend.event || 0).toLocaleString()} · 일상 ₩${(spend.daily || 0).toLocaleString()} · 부스 ₩${(spend.booth || 0).toLocaleString()} · 가챠 ₩${(spend.gacha || 0).toLocaleString()} · 마켓 ₩${(spend.market || 0).toLocaleString()} · 티켓 ₩${(spend.ticket || 0).toLocaleString()}`);
   console.log(`최종: 골드 ₩${s.gold.toLocaleString()} · 팔로워 ${s.followers} · 인지도 ${s.fame} · 수집 ${(s.collection || []).length}종`);
 }
 

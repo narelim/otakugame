@@ -6,6 +6,7 @@ import { pushMessage } from "../systems/messageSystem.js";
 import GoodsFactoryStore from "./GoodsFactoryStore.jsx";
 import GenreLabSite from "./GenreLabSite.jsx";
 import CodiMallSite from "./CodiMallSite.jsx";
+import MeruMarketSite from "./MeruMarketSite.jsx";
 
 /* ============================================================
    인터넷 앱 (데스크톱 창 내부) — 브라우저 메타포
@@ -316,11 +317,12 @@ function Home({ go }) {
       {/* 북마크 사이트 */}
       <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 28 }}>
         <div style={{ fontSize: 13, color: "#889", letterSpacing: 4 }}>🔖 즐겨찾기</div>
-        <div style={{ display: "flex", gap: 32 }}>
+        <div style={{ display: "flex", gap: 32, flexWrap: "wrap", justifyContent: "center", maxWidth: 900 }}>
           {bookmark("🎪", "메이저랜드", "majorland", "linear-gradient(135deg,#ff6b6b,#ffa94d)")}
           {bookmark("🏭", "굿즈팩토리", "factory", "linear-gradient(135deg,#2d5bff,#6ba3ff)")}
           {bookmark("🧪", "장르연구소", "genrelab", "linear-gradient(135deg,#7c3aed,#a855f7)")}
           {bookmark("👗", "코디몰", "codimall", "linear-gradient(135deg,#ff5e8a,#ffa4c0)")}
+          {bookmark("♻️", "메루마켓", "meru", "linear-gradient(135deg,#00b493,#5fd9c0)")}
         </div>
       </div>
     </div>
@@ -336,6 +338,7 @@ export default function InternetApp({ state, setState } = {}) {
   if (route === "factory") return <GoodsFactory onHome={home} state={state} setState={setState} />;
   if (route === "genrelab") return <Site onHome={home}><GenreLabSite state={state} setState={setState} /></Site>;
   if (route === "codimall") return <Site onHome={home}><CodiMallSite state={state} setState={setState} /></Site>;
+  if (route === "meru") return <Site onHome={home}><MeruMarketSite state={state} setState={setState} /></Site>;
   if (route.startsWith("acct:")) return <Account onHome={home} go={go} initialMenu={route.slice(5)} state={state} />;
   return <Home go={go} />;
 }

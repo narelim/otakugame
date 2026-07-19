@@ -9,6 +9,9 @@ import { hiatusGenre, resumeGenre, closeGenre, refandomBonus, applyRefandom } fr
 import { myPostTemplates, canPostToday, publishMyPost } from "../src/systems/myPostSystem.js";
 import { canPackToday, doPack } from "../src/systems/packingSystem.js";
 import { canWorkCommission, doCommission, expireCommission } from "../src/systems/commissionSystem.js";
+import { doGacha, PITY, GACHA_COST } from "../src/systems/gachaSystem.js";
+import { marketListings, buyListing, boughtToday, sellStock, sellDupe } from "../src/systems/marketSystem.js";
+import { resolveTicketing, attendFanEvent, missFanEvents, enterRaffle, resolveRaffle } from "../src/systems/fanEventSystem.js";
 import { logTx } from "../src/systems/bankSystem.js";
 import { normalizeLoaded } from "../src/systems/genreSystem.js";
 
@@ -258,6 +261,69 @@ describe("행동 슬롯 소모 (알바·포장·커미션)", () => {
     const e = expireCommission({ ...s, day: s.day + 4 });
     expect(e.commission).toBe(null);
     expect(e.messages.some(m => m.text.includes("취소"))).toBe(true);
+  });
+});
+
+describe("백로그: 가챠·메루마켓·티켓팅·응모", () => {
+  it("가챠: 천장 30연에서 SSR 확정 + 피티 리셋 + 성향통계", () => {
+    let s = newState(); s = { ...s, gold: 100000, gachaPity: PITY - 1 };
+    const r = doGacha(s, 1);
+    expect(r.items[0].rarity).toBe("SSR"); // 천장 확정
+    expect(r.state.gachaPity).toBe(0);
+    expect(r.state.gold).toBe(100000 - GACHA_COST);
+    expect(r.state.stats.spend.gacha).toBe(GACHA_COST);
+    expect(r.state.collection.length).toBe(1);
+  });
+  it("메루마켓: 매물 결정적 로테이션·구매·재고 떨이·중복 처분", () => {
+    let s = newState(); s = { ...s, gold: 500000 };
+    const l1 = marketListings(s), l2 = marketListings(s);
+    expect(l1.map(x => x.key)).toEqual(l2.map(x => x.key)); // 같은 날 = 같은 매물
+    const item = l1.find(x => x.item && !x.fake);
+    s = buyListing(s, item);
+    expect(boughtToday(s, item.key)).toBe(true);
+    expect(s.collection.length).toBe(1); // 진품은 덕질장으로
+    expect(s.stats.spend.market).toBe(item.price);
+    // 재고 떨이: 40개 × ₩1,500 × 45% = ₩27,000
+    s = { ...s, goods: [{ id: 9, type: "postcard", name: "엽서", price: 1500, stock: 40, baseImage: "x", imageData: "x" }] };
+    s = sellStock(s, 9);
+    expect(s.goods.length).toBe(0);
+    expect(s.stats.earn.market).toBe(27000);
+    // 중복 처분: N급 ×3 → 2개 × 12,000 × 25% = ₩6,000
+    s = { ...s, collection: [{ char: "카일", type: "badge", motif: "heart", rarity: "N", name: "카일 하트 캔뱃지", count: 3 }] };
+    s = sellDupe(s, 0);
+    expect(s.collection[0].count).toBe(1);
+    expect(s.stats.earn.market).toBe(27000 + 6000);
+  });
+  it("티켓팅: 풀퍼펙트는 확정 성공 → 캘린더 등록, 참석/놓침", () => {
+    let s = newState();
+    s = { ...s, gold: 60000, ticketing: { type: "popup", icon: "🛍", name: "카일 팝업스토어", openDay: s.day, eventDay: s.day + 5, cost: 12000, mental: 22 } };
+    const r = resolveTicketing(s, 1.4);
+    expect(r.ok).toBe(true);
+    expect(r.state.fanEvents.length).toBe(1);
+    expect(r.state.actionsToday).toBe(1);
+    // 참석
+    let t = { ...r.state, day: s.day + 5, actionsToday: 0, mentalHealth: 50 };
+    t = attendFanEvent(t);
+    expect(t.fanEvents.length).toBe(0);
+    expect(t.gold).toBe(60000 - 12000);
+    expect(t.mentalHealth).toBeGreaterThanOrEqual(70); // +22 (수집 보너스로 더 오를 수 있음)
+    expect(t.stats.spend.ticket).toBe(12000);
+    // 놓침
+    let m = { ...r.state, day: s.day + 6, mentalHealth: 50 };
+    m = missFanEvents(m);
+    expect(m.fanEvents.length).toBe(0);
+    expect(m.mentalHealth).toBe(42);
+  });
+  it("응모: 원클릭 응모 → 결과일에 발표", () => {
+    let s = newState();
+    s = { ...s, raffleOffer: { prizeSeed: 12345 } };
+    s = enterRaffle(s);
+    expect(s.raffleOffer).toBe(null);
+    expect(s.rafflePending).toBeTruthy();
+    expect(resolveRaffle(s).rafflePending).toBeTruthy(); // 아직 발표 전
+    const done = resolveRaffle({ ...s, day: s.rafflePending.resultDay });
+    expect(done.rafflePending).toBe(null);
+    expect(done.messages.some(m => m.text.includes("당첨") || m.text.includes("아쉽게도"))).toBe(true);
   });
 });
 

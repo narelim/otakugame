@@ -21,10 +21,9 @@ export function collectionSets(state) {
   return [...map.values()].map(e => ({ ...e, have: [...e.have], done: OFFICIAL_TYPES.every(t => e.have.has(t.type)) }));
 }
 
-// 공식 굿즈 구경 성공 시 호출: 수집품 획득(중복은 스택) + 레어도 멘탈 보너스 + 세트 완성 체크
-export function gainOfficialGoods(state) {
-  const seed = Math.floor(Math.random() * 2 ** 31);
-  const p = rollItemParams(state.genre, seed);
+// 수집품 1개 추가 (중복은 스택) + 레어도 멘탈 보너스 + 세트 완성 체크.
+// 공식 굿즈 구경·가챠·메루마켓·응모 당첨이 전부 이 함수를 통해 덕질장에 들어온다.
+export function addCollectionItem(state, p) {
   const col = [...(state.collection || [])];
   const dupIdx = col.findIndex(it => it.char === p.char && it.type === p.type && it.motif === p.motif && it.rarity === p.rarity);
   let isNew = false;
@@ -43,4 +42,11 @@ export function gainOfficialGoods(state) {
     ns = { ...ns, collectionSets: [...doneBefore] };
   }
   return { state: ns, item: p, isNew, setDone: fresh.length > 0 };
+}
+
+// 공식 굿즈 구경 성공 시 호출: 랜덤 수집품 획득
+export function gainOfficialGoods(state) {
+  const seed = Math.floor(Math.random() * 2 ** 31);
+  const p = rollItemParams(state.genre, seed);
+  return addCollectionItem(state, p);
 }

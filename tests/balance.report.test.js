@@ -8,8 +8,8 @@ import { runSim, report, aggregate } from "./balanceSim.js";
    ============================================================ */
 
 const PERSONAS = {
-  diligent: { job: "conv", jobWhenBroke: null, boothBudget: 45000, orderBase: 80, acrylic: true, spendy: false },
-  allin: { job: null, jobWhenBroke: "logis", boothBudget: 45000, orderBase: 140, acrylic: true, spendy: true },
+  diligent: { job: "conv", jobWhenBroke: null, boothBudget: 45000, orderBase: 80, acrylic: true, spendy: false, sellLeftovers: true },
+  allin: { job: null, jobWhenBroke: "logis", boothBudget: 45000, orderBase: 140, acrylic: true, spendy: true, sellLeftovers: true },
 };
 
 describe("밸런스 리포트 (관찰용)", () => {
