@@ -14,7 +14,7 @@ const nowMs = () => performance.now();
 const multOf = (score) => score >= 5 ? 1.4 : score >= 3 ? 1.0 : score >= 1 ? 0.7 : 0.5;
 const gradeLabel = (score) => score >= 5 ? "완벽한 근무! 🌟" : score >= 3 ? "무난한 하루 👍" : score >= 1 ? "아슬아슬... 💦" : "혼났다... 😵";
 
-export default function WorkGame({ job, onDone, onCancel }) {
+export default function WorkGame({ job, onDone, onCancel, subtitle, doneLabel, cancelLabel }) {
   const g = job.game || { title: "근무", hint: "타이밍에 맞춰 탭!", color: "#ff9f43" };
   const [round, setRound] = useState(0);          // 0..ROUNDS-1, ROUNDS면 결과
   const [pos, setPos] = useState(0);              // 커서 위치 0~1
@@ -55,9 +55,9 @@ export default function WorkGame({ job, onDone, onCancel }) {
       <div style={{ padding: "13px 16px", background: `linear-gradient(135deg,${g.color},#1a1430)`, flexShrink: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div>
           <div style={{ fontSize: 15, fontWeight: 900, color: "#fff" }}>{job.icon} {g.title}</div>
-          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>{job.name} 출근 중</div>
+          <div style={{ fontSize: 10, color: "rgba(255,255,255,0.75)", marginTop: 2 }}>{subtitle || `${job.name} 출근 중`}</div>
         </div>
-        {!done && <button onClick={onCancel} style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#fff", fontSize: 11, cursor: "pointer" }}>조퇴</button>}
+        {!done && <button onClick={onCancel} style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.4)", background: "transparent", color: "#fff", fontSize: 11, cursor: "pointer" }}>{cancelLabel || "조퇴"}</button>}
       </div>
 
       {!done ? (
@@ -83,7 +83,7 @@ export default function WorkGame({ job, onDone, onCancel }) {
           <div style={{ fontSize: 44 }}>{score >= 5 ? "🌟" : score >= 3 ? "😊" : score >= 1 ? "😅" : "😵"}</div>
           <div style={{ fontSize: 17, fontWeight: 900, color: "#ffd166" }}>{gradeLabel(score)}</div>
           <div style={{ fontSize: 12, color: "#9a8fc0" }}>판정 {hits.map(h => h.label).join(" · ")}<br />일당 배율 ×{multOf(score)}</div>
-          <button onClick={() => onDone(multOf(score), gradeLabel(score), score)} style={{ padding: 15, borderRadius: 13, border: "none", background: "linear-gradient(135deg,#ff9f43,#e94560)", color: "#fff", fontWeight: 900, fontSize: 15, cursor: "pointer" }}>💼 퇴근! (일당 적립)</button>
+          <button onClick={() => onDone(multOf(score), gradeLabel(score), score)} style={{ padding: 15, borderRadius: 13, border: "none", background: "linear-gradient(135deg,#ff9f43,#e94560)", color: "#fff", fontWeight: 900, fontSize: 15, cursor: "pointer" }}>{doneLabel || "💼 퇴근! (일당 적립)"}</button>
         </div>
       )}
     </div>

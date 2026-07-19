@@ -1,3 +1,4 @@
+import { ACT_MAX } from "../data/gameData.js";
 import { logTx } from "./bankSystem.js";
 import { pushMessage } from "./messageSystem.js";
 
@@ -45,12 +46,14 @@ export function quitJob(state){
   if(j)ns=pushMessage(ns,{from:"알바냥",avatar:"🐱",text:`${j.name}을(를) 그만뒀다냥. 다음 알바도 알바냥에서 찾아보라냥~`});
   return ns;
 }
-// 출근(미니게임 종료 후 호출): 일당 적립 + 체력·멘탈 소모. 하루 1회.
+// 출근(미니게임 종료 후 호출): 일당 적립 + 체력·멘탈 소모 + 행동 슬롯 1 소모. 하루 1회.
 export function workShift(state,mult){
   const j=getJob(state);if(!j||hasWorkedToday(state)||!isWorkdayToday(state))return state;
+  if((state.actionsToday||0)>=ACT_MAX)return state; // 인게임 시간(행동력)이 없으면 출근 불가
   const wage=shiftWage(j,mult);
   return {...state,
     job:{...state.job,attend:[...(state.job.attend||[]),{day:state.day,wage}]},
+    actionsToday:(state.actionsToday||0)+1,
     stamina:Math.max(0,(state.stamina||0)-j.staminaCost),
     mentalHealth:Math.max(0,(state.mentalHealth||0)-(j.mentalCost||0)),
   };

@@ -3,7 +3,10 @@ import { DAILY_ACTIONS, SAVE_KEY, ACT_MAX } from "../data/gameData.js";
 import { performAction, sleepDay } from "../systems/dailySystem.js";
 import { isEventDay, nearestUpcomingEvent } from "../systems/eventSystem.js";
 import { getJob, isWorkdayToday, hasWorkedToday } from "../systems/jobSystem.js";
+import { canPackToday, doPack, PACK_JOB } from "../systems/packingSystem.js";
+import { doCommission, COMMISSION_JOB } from "../systems/commissionSystem.js";
 import { unreadCount } from "../systems/messageSystem.js";
+import WorkGame from "../components/WorkGame.jsx";
 import { GoodsImg } from "../components/BoothStage.jsx";
 import Avatar from "../components/Avatar.jsx";
 import PhoneOS from "./PhoneOS.jsx";
@@ -37,6 +40,7 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
   const [menu, setMenu] = useState(null);      // {title, opts:[{icon,label,desc,run,disabled}]}
   const [dawn, setDawn] = useState(null);      // 취침 전환 연출 {day}
   const [phoneOpen, setPhoneOpen] = useState(false);
+  const [minigame, setMinigame] = useState(null); // "pack" | "commission"
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(null), 2600); return () => clearTimeout(t); }, [toast]);
 
   const used = state.actionsToday || 0;
@@ -124,6 +128,18 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
         </div>
       </Hotspot>
 
+      {/* ── 행사 포장 박스 (D-1에만 등장) ── */}
+      {canPackToday(state) && <Hotspot x="52.5%" bottom="4.5%" w="6%" h="13%" z={7} pulse label="행사 굿즈 포장하기 (행동 1)" icon="📦" onClick={() => setMinigame("pack")}>
+        <div style={{ position: "absolute", inset: 0 }}>
+          <div style={{ position: "absolute", left: "8%", bottom: 0, width: "84%", height: "52%", background: "#c9a06b", border: "2px solid #a87f4c", borderRadius: 4 }}>
+            <div style={{ position: "absolute", left: "44%", top: 0, bottom: 0, width: "12%", background: "#e8d5b8" }} />
+          </div>
+          <div style={{ position: "absolute", left: "18%", bottom: "50%", width: "64%", height: "46%", background: "#d9b07c", border: "2px solid #b8905c", borderRadius: 4, transform: "rotate(-4deg)" }}>
+            <div style={{ position: "absolute", left: "44%", top: 0, bottom: 0, width: "12%", background: "#f0e0c4" }} />
+          </div>
+        </div>
+      </Hotspot>}
+
       {/* ── 책상 + 컴퓨터 + 폰 ── */}
       <div style={{ position: "absolute", left: "58%", top: "38%", width: "26%", height: "34%", zIndex: 5 }}>
         {/* 책상 */}
@@ -138,6 +154,16 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
           </div>
           <div style={{ position: "absolute", left: "42%", top: "98%", width: "16%", height: "18%", background: "#0c0a14" }} />
         </Hotspot>
+        {/* 커미션 태블릿 (의뢰가 있을 때만) */}
+        {state.commission && <Hotspot x="0%" y="30%" w="14%" h="26%" pulse label={`커미션 작업 (₩${state.commission.amount.toLocaleString()} · D-${Math.max(0, state.commission.expiresDay - state.day)})`} icon="🎨" onClick={() => {
+          if ((state.actionsToday || 0) >= ACT_MAX) { setToast({ text: "오늘 행동을 다 썼어요... 내일 꼭 작업하자 (기한 주의!)", type: "bad" }); return; }
+          if ((state.stamina || 0) < 15) { setToast({ text: "체력이 부족해요 (15 이상 필요)", type: "bad" }); return; }
+          setMinigame("commission");
+        }}>
+          <div style={{ position: "absolute", inset: 0, background: "#1e1a2e", border: "2px solid #0c0a14", borderRadius: 5, transform: "rotate(8deg)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 11, filter: "drop-shadow(0 0 4px rgba(124,58,237,0.8))" }}>🎨</span>
+          </div>
+        </Hotspot>}
         {/* 폰 스탠드 */}
         <Hotspot x="70%" y="34%" w="14%" h="24%" label="핸드폰" icon="📱" onClick={() => openMenu("📱 핸드폰", [
           { icon: "📱", label: "폰 열기 (앱 사용)", desc: unread ? `안 읽은 메시지 ${unread}개` : "SNS·알바냥·은행…", run: () => { setMenu(null); setPhoneOpen(true); } },
@@ -220,6 +246,22 @@ export default function MyRoomScreen({ state, setState, onGoEvent, onPowerOn }) 
               </button>))}
             <button onClick={() => setMenu(null)} style={{ padding: 9, borderRadius: 10, border: "1px solid #2a2a4a", background: "transparent", color: "#666", cursor: "pointer", fontSize: 12 }}>취소</button>
           </div>
+        </div>
+      </div>}
+
+      {/* ── 포장/커미션 미니게임 ── */}
+      {minigame && <div style={{ position: "absolute", inset: 0, zIndex: 85, background: "rgba(5,5,15,0.75)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ width: 380, height: 520, borderRadius: 20, overflow: "hidden", border: "1px solid #3a3a6a", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+          <WorkGame job={minigame === "pack" ? PACK_JOB : COMMISSION_JOB}
+            subtitle={minigame === "pack" ? "행사 전날 · 내 방" : `${state.commission ? state.commission.from : ""}님 의뢰 작업 중`}
+            doneLabel={minigame === "pack" ? "📦 포장 끝! (행동 1 소요)" : "🎨 납품하기 (행동 1 소요)"}
+            cancelLabel="나중에"
+            onCancel={() => setMinigame(null)}
+            onDone={(mult, label) => {
+              if (minigame === "pack") { setState(s => doPack(s, mult)); setToast({ text: `📦 포장 완료! ${label} — 내일 행사가 든든하다`, type: "good" }); }
+              else { const pay = Math.max(1000, Math.round((state.commission ? state.commission.amount : 0) * mult / 100) * 100); setState(s => doCommission(s, mult)); setToast({ text: `🎨 커미션 납품! ${label} +₩${pay.toLocaleString()}`, type: "good" }); }
+              setMinigame(null);
+            }} />
         </div>
       </div>}
 

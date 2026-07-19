@@ -4,6 +4,7 @@ import { applyReadyOrders } from "./goodsSystem.js";
 import { processDailyEvents, applyEventDelta, nextGameDate } from "./snsEventSystem.js";
 import { pushMessage } from "./messageSystem.js";
 import { processPayday, getJob, isWorkdayToday } from "./jobSystem.js";
+import { maybeOfferCommission, expireCommission } from "./commissionSystem.js";
 
 export function resolveEventName(type,genre){const c=buildVarCtx(genre);return (type.name||"").replace(/\{장르명\}/g,c.gname).replace(/\{cp명\}/g,c.cpName);}
 export function eventWeekendDay(day){for(let i=0;i<14;i++){const w=(day+i)%7;if(w===6)return {day:day+i,dow:"sat"};if(w===0)return {day:day+i,dow:"sun"};}return {day,dow:"sat"};}
@@ -29,7 +30,7 @@ export function nearestAppliedEvent(s){
   return ((s.genre&&s.genre.eventSchedule)||[]).filter(e=>ids.includes(e.id)&&e.endDay>=s.day).sort((a,b)=>a.startDay-b.startDay)[0]||null;
 }
 export function nearestUpcomingEvent(s){if(s.activeEvent&&s.activeEvent.startDay>=s.day)return s.activeEvent;const sc=((s.genre&&s.genre.eventSchedule)||[]).filter(e=>e.startDay>=s.day).sort((a,b)=>a.startDay-b.startDay);return sc[0]||s.activeEvent||null;}
-export function dDayNotice(s){const ev=nearestUpcomingEvent(s);if(!ev)return null;const d=ev.startDay-s.day;const map={14:`${ev.name} 접수 시작! 지금 신청하세요`,7:"굿즈 주문 마감이 다가오고 있어요",5:"아크릴·회지는 오늘까지만 주문 가능해요",3:"행사까지 3일! 포장 준비를 시작해요",1:"내일이 행사! 부스 배치를 확정해요",0:`${ev.name} 당일! 파이팅!`};return map[d]?{dday:d,msg:map[d],name:ev.name}:null;}
+export function dDayNotice(s){const ev=nearestUpcomingEvent(s);if(!ev)return null;const d=ev.startDay-s.day;const map={14:`${ev.name} 접수 시작! 지금 신청하세요`,7:"굿즈 주문 마감이 다가오고 있어요",5:"아크릴·회지는 오늘까지만 주문 가능해요",3:"행사까지 3일! 포장 준비를 시작해요",1:"내일이 행사! 오늘 미리 포장(내 방 📦)해두면 당일이 편해요",0:`${ev.name} 당일! 파이팅!`};return map[d]?{dday:d,msg:map[d],name:ev.name}:null;}
 // 날짜가 넘어간 직후의 공통 처리: 주문 완성(+메시지) → 월급일 입금. 취침/실시간/행사 정산이 공유.
 export function endOfDay(s){
   const done=(s.orders||[]).filter(o=>o.status==="making"&&o.readyDay<=s.day);
@@ -42,13 +43,16 @@ export function endOfDay(s){
   // 출근 알림: 오늘이 근무일이면 아침에 알바냥이 알려준다 (행사 당일은 휴무라 제외)
   const j=getJob(ns);
   if(j&&isWorkdayToday(ns)&&!isEventDay(ns))ns=pushMessage(ns,{from:"알바냥",avatar:"🐱",text:`[출근 알림] 오늘은 ${j.name} 근무일이다냥! 📱 알바냥 앱에서 출근하라냥 (일당 ₩${j.dayWage.toLocaleString()}~)`});
+  // 커미션: 기한 만료 처리 → 새 의뢰 도착 확률 (월급 전 부수익 루트)
+  ns=expireCommission(ns);
+  ns=maybeOfferCommission(ns);
   return ns;
 }
 // 하루 진행(취침/실시간 공용): 주문완료 + 날짜 + 이벤트(라인업>D-day알림>랜덤)
 export function advanceDay(s){
   let ns=endOfDay({...s,day:s.day+1,gameDate:nextGameDate(s.gameDate),actionsToday:0});
   // 마감 압박: 신청해 둔 행사 D-7~D-1엔 원고·재고·포장 걱정으로 멘탈이 갈린다
-  const PRESSURE=4;
+  const PRESSURE=5;
   const ae=ns.activeEvent;const dTo=ae?ae.startDay-ns.day:-1;
   const pressured=!!(ae&&dTo>=1&&dTo<=7);
   if(pressured)ns={...ns,mentalHealth:Math.max(0,ns.mentalHealth-PRESSURE)};

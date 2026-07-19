@@ -7,6 +7,8 @@ import { applyForJob, workShift, isWorkdayToday, hasWorkedToday, pendingWages, s
 import { gainOfficialGoods } from "../src/systems/collectionSystem.js";
 import { hiatusGenre, resumeGenre, closeGenre, refandomBonus, applyRefandom } from "../src/systems/endingSystem.js";
 import { myPostTemplates, canPostToday, publishMyPost } from "../src/systems/myPostSystem.js";
+import { canPackToday, doPack } from "../src/systems/packingSystem.js";
+import { canWorkCommission, doCommission, expireCommission } from "../src/systems/commissionSystem.js";
 import { logTx } from "../src/systems/bankSystem.js";
 import { normalizeLoaded } from "../src/systems/genreSystem.js";
 
@@ -213,6 +215,49 @@ describe("내 포스트 (myPostSystem)", () => {
     expect(s.followers).toBeGreaterThan(before);
     expect(s.flags.recentPost).toBe(true);
     expect(canPostToday(s)).toBe(false); // 하루 1회
+  });
+});
+
+describe("행동 슬롯 소모 (알바·포장·커미션)", () => {
+  it("알바 출근이 행동 슬롯을 소모하고, 슬롯이 없으면 출근 불가", () => {
+    let s = newState(); s = applyForJob(s, "conv");
+    while (!isWorkdayToday(s)) s = { ...s, day: s.day + 1 };
+    expect(workShift({ ...s, actionsToday: 2 }, 1)).toEqual({ ...s, actionsToday: 2 }); // 슬롯 없음 → 무시
+    const w = workShift({ ...s, actionsToday: 0 }, 1);
+    expect(w.actionsToday).toBe(1);
+    expect(w.job.attend.length).toBe(1);
+  });
+  it("포장: D-1에만 가능, 슬롯 소모, 행사 정산 후 초기화", () => {
+    let s = newState();
+    const ev = s.genre.eventSchedule[0];
+    s = { ...s, activeEvent: ev, appliedEvents: [ev.id], boothApp: { name: "b", desc: "", submitted: true }, goods: [{ id: 1, type: "postcard", name: "엽서", price: 1500, stock: 50, baseImage: "x", imageData: "x" }], day: ev.startDay - 1 };
+    expect(canPackToday(s)).toBe(true);
+    expect(canPackToday({ ...s, day: ev.startDay - 2 })).toBe(false); // D-2엔 불가
+    const p = doPack(s, 1.4);
+    expect(p.packedEventId).toBe(ev.id);
+    expect(p.actionsToday).toBe(1);
+    expect(canPackToday(p)).toBe(false); // 이미 포장함
+    const dayOf = { ...p, day: ev.startDay };
+    const sim = simulateEvent(dayOf);
+    expect(sim.evs.some(e => e.text.includes("포장은 이미 끝"))).toBe(true); // 밤샘 리스크 제거
+    const c = commitEventResult(dayOf, sim);
+    expect(c.packedEventId).toBe(null);
+    expect(c.actionsToday).toBe(0);
+  });
+  it("커미션: 작업 보수·슬롯 소모·기한 만료", () => {
+    let s = newState();
+    s = { ...s, commission: { amount: 20000, from: "@x", offeredDay: s.day, expiresDay: s.day + 3 } };
+    expect(canWorkCommission(s)).toBe(true);
+    expect(canWorkCommission({ ...s, actionsToday: 2 })).toBe(false);
+    const d = doCommission(s, 1.0);
+    expect(d.commission).toBe(null);
+    expect(d.gold).toBe(s.gold + 20000);
+    expect(d.stats.earn.commission).toBe(20000);
+    expect(d.actionsToday).toBe(1);
+    // 만료
+    const e = expireCommission({ ...s, day: s.day + 4 });
+    expect(e.commission).toBe(null);
+    expect(e.messages.some(m => m.text.includes("취소"))).toBe(true);
   });
 });
 

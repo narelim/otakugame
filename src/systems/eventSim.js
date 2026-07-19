@@ -21,9 +21,16 @@ export function simulateEvent(state) {
   const { fame: totalFame, sell: totalSell } = boothBonuses(state, BOOTH_ITEMS);
   const decoCount = (state.boothLayout && state.boothLayout.version === 2) ? state.boothLayout.items.length : (state.boothItems || []).length;
   const evs = []; let goldEarned = 0, fameEarned = 0, staminaCost = 25, mentalChange = 0; const soldResults = [];
-  evs.push({ time: "D-1", text: "포장 시작!", type: "normal" });
-  if (Math.random() > .5) { evs.push({ time: "새벽", text: "아직도 포장 중... 체력 -15", type: "warning" }); staminaCost += 15; }
-  else { evs.push({ time: "밤", text: "일찍 완료! 체력 절약 ✨", type: "good" }); }
+  // 포장: D-1에 미리 해뒀으면(packingSystem) 밤샘 리스크가 사라진다
+  const packed = !!(state.packedEventId && state.activeEvent && state.packedEventId === state.activeEvent.id);
+  if (packed) {
+    evs.push({ time: "D-1", text: "포장은 이미 끝! 박스가 든든하다 📦", type: "good" });
+    if ((state.packQuality || 1) >= 1.4) { evs.push({ time: "새벽", text: "완벽 포장 덕에 푹 잤다. 컨디션 최상 ✨", type: "great" }); staminaCost -= 5; mentalChange += 2; }
+  } else {
+    evs.push({ time: "D-1", text: "포장을 미리 못 했다... 지금부터 시작", type: "normal" });
+    if (Math.random() > .5) { evs.push({ time: "새벽", text: "아직도 포장 중... 체력 -15", type: "warning" }); staminaCost += 15; }
+    else { evs.push({ time: "밤", text: "벼락치기로 어찌어찌 끝냈다", type: "normal" }); }
+  }
   evs.push({ time: "당일", text: `부스 세팅! (배치물 ${decoCount}개)`, type: "normal" });
   if (hasDeco(state, "banner", "banner_")) evs.push({ time: "현수막", text: `"${(state.genre && state.genre.name) || "MY CIRCLE"}" 현수막에 눈길이!`, type: "good" });
   if (hasDeco(state, "light", "light_")) evs.push({ time: "조명", text: "LED 아래 굿즈가 반짝반짝", type: "good" });
@@ -64,7 +71,7 @@ export function commitEventResult(s, r) {
   const updGoods = s.goods.map(g => { const x = soldResults.find(q => q.id === g.id); return x && x.remaining > 0 ? { ...g, stock: x.remaining } : null; }).filter(Boolean);
   const soldOut = soldResults.some(x => x.sold > 0 && x.remaining === 0);
   const aeId = s.activeEvent && s.activeEvent.id;
-  let ns = { ...s, fame: s.fame + fameEarned, followers: Math.max(0, s.followers + Math.floor(fameEarned * .1)), stamina: Math.max(0, s.stamina - staminaCost), mentalHealth: Math.max(0, Math.min(100, s.mentalHealth + mentalChange)), goods: updGoods, day: s.day + 1, gameDate: nextGameDate(s.gameDate), activeEvent: null, boothApp: { ...s.boothApp, submitted: false }, appliedEvents: (s.appliedEvents || []).filter(id => id !== aeId), flags: { ...s.flags, firstEvent: true, recentEvent: true, goodsSoldOut: soldOut }, eventHistory: [...s.eventHistory, { day: s.day, goldEarned, fameEarned }] };
+  let ns = { ...s, fame: s.fame + fameEarned, followers: Math.max(0, s.followers + Math.floor(fameEarned * .1)), stamina: Math.max(0, s.stamina - staminaCost), mentalHealth: Math.max(0, Math.min(100, s.mentalHealth + mentalChange)), goods: updGoods, day: s.day + 1, gameDate: nextGameDate(s.gameDate), actionsToday: 0, packedEventId: null, packQuality: null, activeEvent: null, boothApp: { ...s.boothApp, submitted: false }, appliedEvents: (s.appliedEvents || []).filter(id => id !== aeId), flags: { ...s.flags, firstEvent: true, recentEvent: true, goodsSoldOut: soldOut }, eventHistory: [...s.eventHistory, { day: s.day, goldEarned, fameEarned }] };
   // 다중 신청 지원: 끝난 행사를 빼고도 신청해둔 행사가 남아있으면 그 행사가 다음 활성 행사가 된다 (신청 상태 유지)
   const nxt = nearestAppliedEvent(ns);
   if (nxt) ns = { ...ns, activeEvent: nxt, boothApp: { ...ns.boothApp, submitted: true } };

@@ -3,6 +3,8 @@ import { generateEventSchedule, isEventDay, advanceDay, nearestAppliedEvent } fr
 import { simulateEvent, commitEventResult } from "../src/systems/eventSim.js";
 import { performAction } from "../src/systems/dailySystem.js";
 import { applyForJob, workShift, isWorkdayToday, hasWorkedToday, getJob } from "../src/systems/jobSystem.js";
+import { canPackToday, doPack } from "../src/systems/packingSystem.js";
+import { canWorkCommission, doCommission } from "../src/systems/commissionSystem.js";
 import { myPostTemplates, canPostToday, publishMyPost } from "../src/systems/myPostSystem.js";
 import { logTx } from "../src/systems/bankSystem.js";
 
@@ -89,14 +91,21 @@ export function runSim(persona, DAYS = 200) {
         if (s.gold !== before || need < 50) orderedFor.add(ae.id);
       }
     }
-    // ── 알바 출근 ──
+    // ── 포장 (행사 D-1 최우선 — 행동 1 소요) ──
+    if (canPackToday(s)) { const r = Math.random(); s = doPack(s, r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7); }
+    // ── 알바 출근 (행동 1 소요) ──
     if (getJob(s) && isWorkdayToday(s) && !hasWorkedToday(s) && !isEventDay(s) && s.stamina >= 20) {
       const r = Math.random(); const mult = r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7;
       s = workShift(s, mult);
     }
+    // ── 커미션 (기한 마지막 날엔 무조건, 아니면 컨디션 좋을 때 — 행동 1 소요) ──
+    if (canWorkCommission(s)) {
+      const urgent = s.commission.expiresDay - s.day <= 0;
+      if (urgent || (s.stamina >= 45 && s.mentalHealth >= 40)) { const r = Math.random(); s = doCommission(s, r < 0.25 ? 1.4 : r < 0.85 ? 1.0 : 0.7); }
+    }
     // ── 일상 행동 2회 (우선순위 정책) ──
     for (let k = 0; k < 2; k++) {
-      let act = null;
+      let act;
       if (s.stamina < 45) act = A("sleep");
       else if (s.mentalHealth < 45) act = s.gold > 12000 ? A("recharge") : A("shorts");
       else if (persona.spendy && s.gold > 30000 && Math.random() < 0.5) act = A("newgoods");
@@ -144,7 +153,7 @@ export function report(name, { s, series, note }) {
   console.log(line("인지", p => p.fame));
   console.log(line("팔로", p => p.fol));
   console.log(`행사 ${note.events}회 (평균 수익 ₩${note.events ? Math.round((earn.event || 0) / note.events).toLocaleString() : 0}) · 완판 ${note.sellouts}/${note.goodsKinds}종 · 최저골드 ₩${note.minGold.toLocaleString()}(Day ${note.minGoldDay}) · 골드<3천 ${note.broke}일 · 멘탈<30 ${note.lowMental}일 · 체력<20 ${note.lowStamina}일`);
-  console.log(`수입: 행사 ₩${(earn.event || 0).toLocaleString()} · 월급 ₩${(earn.job || 0).toLocaleString()} · 기타 ₩${(earn.etc || 0).toLocaleString()}`);
+  console.log(`수입: 행사 ₩${(earn.event || 0).toLocaleString()} · 월급 ₩${(earn.job || 0).toLocaleString()} · 커미션 ₩${(earn.commission || 0).toLocaleString()} · 기타 ₩${(earn.etc || 0).toLocaleString()}`);
   console.log(`지출: 굿즈 ₩${(spend.goods || 0).toLocaleString()} · 행사비 ₩${(spend.event || 0).toLocaleString()} · 일상 ₩${(spend.daily || 0).toLocaleString()} · 부스 ₩${(spend.booth || 0).toLocaleString()}`);
   console.log(`최종: 골드 ₩${s.gold.toLocaleString()} · 팔로워 ${s.followers} · 인지도 ${s.fame} · 수집 ${(s.collection || []).length}종`);
 }

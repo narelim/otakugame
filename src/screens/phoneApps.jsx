@@ -132,11 +132,12 @@ export function JobcatApp({state,setState}){
   const workday=isWorkdayToday(state);
   const worked=hasWorkedToday(state);
   const lowSt=(state.stamina||0)<15;
-  const canWork=!!cur&&workday&&!worked&&!eventDay&&!lowSt;
+  const noSlot=(state.actionsToday||0)>=2;
+  const canWork=!!cur&&workday&&!worked&&!eventDay&&!lowSt&&!noSlot;
   const pending=pendingWages(state);
   useEffect(()=>{if(!note)return;const t=setTimeout(()=>setNote(null),2800);return()=>clearTimeout(t);},[note]);
   if(working&&cur)return <WorkGame job={cur} onCancel={()=>setWorking(false)} onDone={(mult,label)=>{const wage=shiftWage(cur,mult);setState(s=>workShift(s,mult));setWorking(false);setNote(`${label} 일당 ₩${wage.toLocaleString()} 적립! (월급날 정산)`);}}/>;
-  const reason=!cur?"":worked?"오늘 근무 완료! 수고했다냥 🐾":!workday?`오늘(${DOW_NAMES[today]})은 휴무다냥 · 근무: ${workDaysLabel(cur)}요일`:eventDay?"행사 당일은 알바 휴무다냥!":lowSt?"체력이 부족하다냥... (15 이상 필요)":"";
+  const reason=!cur?"":worked?"오늘 근무 완료! 수고했다냥 🐾":!workday?`오늘(${DOW_NAMES[today]})은 휴무다냥 · 근무: ${workDaysLabel(cur)}요일`:eventDay?"행사 당일은 알바 휴무다냥!":noSlot?"오늘 행동력을 다 썼다냥... (출근도 시간이 든다냥)":lowSt?"체력이 부족하다냥... (15 이상 필요)":"";
   return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#171208",color:"#f0e8dc",fontFamily:"'Noto Sans KR',sans-serif"}}>
     {/* 알바냥 브랜드 헤더 — 고양이 마스코트 배너 */}
     <div style={{padding:"13px 16px 11px",background:"linear-gradient(135deg,#ff9f43,#e0702e)",flexShrink:0,display:"flex",gap:"11px",alignItems:"center"}}>
@@ -157,7 +158,7 @@ export function JobcatApp({state,setState}){
           {DOW_NAMES.map((d,i)=>{const on=cur.workDays.includes(i);const isToday=i===today;
             return <span key={d} style={{flex:1,textAlign:"center",padding:"5px 0",borderRadius:"7px",fontSize:"10px",fontWeight:"800",background:on?"#3a2410":"#1d1710",color:on?"#ffb763":"#5a4d3a",border:isToday?"1.5px solid #ffd166":"1.5px solid transparent"}}>{d}</span>;})}
         </div>
-        <div style={{fontSize:"11px",color:"#a8987e",lineHeight:1.8}}>일당 {KRW(cur.dayWage)} (성과 ×0.5~1.4) · 체력 -{cur.staminaCost} · 멘탈 -{cur.mentalCost}<br/>이번 달 적립 <b style={{color:"#ffd166"}}>{KRW(pending)}</b> · 월급날 {PAYDAY}일 (D-{daysToPayday(gd)})</div>
+        <div style={{fontSize:"11px",color:"#a8987e",lineHeight:1.8}}>일당 {KRW(cur.dayWage)} (성과 ×0.5~1.4) · 체력 -{cur.staminaCost} · 멘탈 -{cur.mentalCost} · ⏳행동 1<br/>이번 달 적립 <b style={{color:"#ffd166"}}>{KRW(pending)}</b> · 월급날 {PAYDAY}일 (D-{daysToPayday(gd)})</div>
         <button onClick={()=>canWork&&setWorking(true)} disabled={!canWork} style={{width:"100%",marginTop:"11px",padding:"13px",borderRadius:"11px",border:"none",background:canWork?"linear-gradient(135deg,#ff9f43,#e94560)":"#241b0e",color:canWork?"#fff":"#6a5a42",fontWeight:"900",fontSize:"14px",cursor:canWork?"pointer":"not-allowed",boxShadow:canWork?"0 4px 16px rgba(255,159,67,0.4)":"none"}}>{canWork?"🕒 출근하기!":worked?"✓ 오늘 근무 완료":"🐾 오늘은 출근 못 한다냥"}</button>
         {reason&&!canWork&&<div style={{fontSize:"10px",color:"#8a7a5e",marginTop:"6px",textAlign:"center"}}>{reason}</div>}
         {!confirmQuit
