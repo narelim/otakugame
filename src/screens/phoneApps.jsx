@@ -4,6 +4,7 @@ import { idbAll, idbDel, idbClear } from "../systems/imageSystem.js";
 import { threads } from "../systems/messageSystem.js";
 import { JOBS, PAYDAY, DOW_NAMES, getJob, applyForJob, quitJob, daysToPayday, weekdayOf, workDaysLabel, monthlyEstimate, isWorkdayToday, hasWorkedToday, shiftWage, workShift, pendingWages } from "../systems/jobSystem.js";
 import { isEventDay } from "../systems/eventSystem.js";
+import { planHostedCafe, planTrip, HOST_COST, TRIP_COST, hasSelfPlan } from "../systems/fanEventSystem.js";
 import WorkGame from "../components/WorkGame.jsx";
 import { officialMockup, OFFICIAL_TYPES } from "../utils/officialGoods.js";
 import { collectionSets, rarityOf } from "../systems/collectionSystem.js";
@@ -324,11 +325,12 @@ export function CollectionApp({state}){
   </div>);
 }
 
-/* ── 캘린더: 행사·월급일 표시 (30일/월, 절대일%7 요일) ── */
-export function CalendarApp({state}){
+/* ── 캘린더: 행사·월급일·덕질 일정 표시 + 셀프 기획(주최/여행) (30일/월, 절대일%7 요일) ── */
+export function CalendarApp({state,setState}){
   const gd=state.gameDate||{month:5,day:1};
   const [mOff,setMOff]=useState(0);
   const [selD,setSelD]=useState(null); // 보고 있는 달의 일(1~30)
+  const [plan,setPlan]=useState(false); // 일정 만들기 모달
   const viewMonth=(((gd.month-1+mOff)%12)+12)%12+1;
   const absOf=(d)=>state.day+mOff*30+(d-gd.day);
   const firstW=((absOf(1)%7)+7)%7; // 0=일 … 6=토
@@ -341,8 +343,8 @@ export function CalendarApp({state}){
   const cells=[...Array(firstW).fill(null),...Array.from({length:30},(_,i)=>i+1)];
   const selAbs=selD!=null?absOf(selD):null;
   const selFairs=selD!=null?fairsOf(selAbs):[];
-  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif"}}>
-    <AppHeader icon="📅" title="캘린더" color="#c084fc" sub="행사 일정 · 월급날"/>
+  return(<div style={{height:"100%",display:"flex",flexDirection:"column",background:"#0d0d1a",color:"#e0e0ff",fontFamily:"'Noto Sans KR',sans-serif",position:"relative"}}>
+    <AppHeader icon="📅" title="캘린더" color="#c084fc" sub="행사 · 덕질 일정 · 월급날"/>
     <div style={{flex:1,overflow:"auto",padding:"12px 14px"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px"}}>
         <button onClick={()=>move(-1)} disabled={mOff<=-3} style={{width:"32px",height:"32px",borderRadius:"9px",background:"#1a1a3a",border:"1px solid #3a3a6a",color:mOff<=-3?"#444":"#c084fc",cursor:mOff<=-3?"not-allowed":"pointer",fontSize:"14px"}}>‹</button>
@@ -385,7 +387,36 @@ export function CalendarApp({state}){
         {state.ticketing&&state.ticketing.openDay===selAbs&&<div style={{display:"flex",gap:"8px",alignItems:"center",padding:"7px 0",borderBottom:"1px solid #1a1a30"}}><span style={{fontSize:"15px"}}>🎫</span><div style={{fontSize:"12px",fontWeight:"700",color:"#e94560"}}>『{state.ticketing.name}』 티켓팅 오픈!</div></div>}
         {state.job&&selD===PAYDAY&&<div style={{display:"flex",gap:"8px",alignItems:"center",padding:"7px 0"}}><span style={{fontSize:"15px"}}>💼</span><div style={{fontSize:"12px",fontWeight:"700",color:"#06d6a0"}}>월급날</div></div>}
       </div>}
-      <div style={{marginTop:"12px",fontSize:"10px",color:"#444",textAlign:"center",lineHeight:1.7}}>🚧 최애 생일·생일카페·팝업 같은 덕질 일정 추가는 준비 중!<br/>덕질 일정과 행사가 겹치는 날엔... 선택이 필요해질 거예요.</div>
+      {setState&&<button onClick={()=>setPlan(true)} style={{width:"100%",marginTop:"12px",padding:"12px",borderRadius:"12px",border:"1.5px dashed #7c3aed",background:"rgba(124,58,237,0.08)",color:"#c084fc",fontSize:"12px",fontWeight:"800",cursor:"pointer"}}>➕ 덕질 일정 만들기 (생카 주최 · 성지순례)</button>}
+      <div style={{marginTop:"10px",fontSize:"10px",color:"#444",textAlign:"center",lineHeight:1.7}}>덕질 일정과 행사가 겹치는 날엔... 선택이 필요해져요.</div>
     </div>
+    {/* 셀프 기획 모달 */}
+    {plan&&(()=>{
+      const busy=hasSelfPlan(state);
+      const opts=[
+        {icon:"🎂",name:"생일카페 주최",cost:HOST_COST,d:7,desc:"대관+특전 제작. 7일 뒤 오픈 — 방문자만큼 팔로워·인지도, 주최 특전(SR)",run:()=>setState(s=>planHostedCafe(s))},
+        {icon:"✈️",name:"성지순례 여행",cost:TRIP_COST,d:5,desc:"교통+숙소 선결제. 5일 뒤 출발 — 멘탈 대충전(+40), 성지 한정 기념품 확정",run:()=>setState(s=>planTrip(s))},
+      ];
+      return(<div onClick={()=>setPlan(false)} style={{position:"absolute",inset:0,zIndex:60,background:"rgba(5,5,15,0.8)",display:"flex",alignItems:"flex-end"}}>
+        <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"#12122a",borderTop:"1px solid #7c3aed55",borderRadius:"16px 16px 0 0",padding:"16px 14px 18px"}}>
+          <div style={{fontSize:"13px",fontWeight:"800",color:"#c084fc",marginBottom:"4px"}}>➕ 덕질 일정 만들기</div>
+          <div style={{fontSize:"10px",color:"#666",marginBottom:"12px"}}>큰돈이 한 번에 나가요 · 필수 아님 · 한 번에 하나만 · <b style={{color:"#e94560"}}>날짜를 못 지키면 큰일</b></div>
+          <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
+            {opts.map(o=>{
+              const noGenre=!state.genre, noGold=(state.gold||0)<o.cost;
+              const dis=busy||noGenre||noGold;
+              const reason=busy?"이미 기획 중인 일정이 있어요":noGenre?"장르가 필요해요":noGold?"골드 부족":"";
+              return(<button key={o.name} disabled={dis} onClick={()=>{o.run();setPlan(false);}} style={{display:"flex",gap:"11px",alignItems:"flex-start",padding:"12px",borderRadius:"12px",border:`1px solid ${dis?"#1e1e3a":"#2a2a4a"}`,background:dis?"#101022":"#1a1733",color:dis?"#555":"#e0e0ff",cursor:dis?"not-allowed":"pointer",textAlign:"left",opacity:dis?0.7:1}}>
+                <span style={{fontSize:"20px",flexShrink:0}}>{o.icon}</span>
+                <span style={{minWidth:0,flex:1}}>
+                  <span style={{display:"block",fontSize:"13px",fontWeight:"800"}}>{o.name} <span style={{color:"#ffd166"}}>{KRW(o.cost)}</span> <span style={{fontSize:"9px",color:"#888"}}>· D+{o.d}</span></span>
+                  <span style={{display:"block",fontSize:"10px",color:dis?"#444":"#8a80a8",marginTop:"3px",lineHeight:1.6}}>{o.desc}</span>
+                  {dis&&<span style={{display:"block",fontSize:"9px",color:"#e94560",marginTop:"3px"}}>{reason}</span>}
+                </span>
+              </button>);})}
+          </div>
+          <button onClick={()=>setPlan(false)} style={{width:"100%",marginTop:"10px",padding:"9px",borderRadius:"10px",border:"1px solid #2a2a4a",background:"transparent",color:"#666",fontSize:"12px",cursor:"pointer"}}>다음에</button>
+        </div>
+      </div>);})()}
   </div>);
 }

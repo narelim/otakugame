@@ -28,6 +28,11 @@ export function marketListings(s) {
     const price = Math.round(base * cond.mult * (0.85 + rng() * 0.4) / 100) * 100;
     out.push({ key: `${s.day}_${i}`, item: p, cond, price: fake ? Math.round(price * 0.45 / 100) * 100 : price, fake });
   }
+  // 전설의 절판품: 10% 확률로 등장하는 초고가 진품 (후반 골드의 목적지)
+  if (rng() < 0.10) {
+    const p = { ...rollItemParams(s.genre, Math.floor(rng() * 2 ** 31)), rarity: "SSR" };
+    out.push({ key: `${s.day}_legend`, item: { ...p, name: `전설의 ${p.name}` }, cond: { id: "S", label: "S급 · 박물관급", mult: 1 }, price: 300000 + Math.round(rng() * 20) * 10000, legend: true });
+  }
   if (s.scalperTicket) out.unshift({ key: "scalper_" + s.scalperTicket.eventDay, ticket: s.scalperTicket, price: s.scalperTicket.price });
   return out;
 }
@@ -49,6 +54,10 @@ export function buyListing(s, l) {
     return pushMessage(ns, { from: "메루마켓", avatar: "♻️", text: `[사기] 도착한 ${l.item.name}... 가품이다!!! 판매자는 잠적했다 (멘탈 -10) 특가엔 이유가 있었어...` });
   }
   const g = addCollectionItem(ns, l.item); ns = g.state;
+  if (l.legend) {
+    ns = { ...ns, mentalHealth: Math.min(100, (ns.mentalHealth || 0) + 10) };
+    return pushMessage(ns, { from: "메루마켓", avatar: "♻️", text: `[거래 완료] ${l.item.name}... 실존했구나. 손이 떨린다. 이건 가보다 (멘탈 +10)` });
+  }
   return pushMessage(ns, { from: "메루마켓", avatar: "♻️", text: `[거래 완료] ${l.item.name} 도착! 포장이 야무지다 👍 덕질장에 등록됐어요.` });
 }
 

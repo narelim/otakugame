@@ -26,13 +26,22 @@ function activate(s, genres, target) {
   return { ...s, genres, activeGenreId: target.id, genre: target, npcRoster: target.assignedNPCs || null, fame: target.fame || 0, followers: target.followers || 0, fanTrust: target.fanTrust != null ? target.fanTrust : 50, engagement: target.engagement != null ? target.engagement : 50, snsHistory: target.snsHistory || [] };
 }
 
+const CAT_LABEL = { goods: "굿즈 제작", gacha: "가챠", market: "덕질템", ticket: "덕질 일정", hosting: "생카 주최", trip: "성지순례", daily: "생활", event: "행사", style: "코디", booth: "부스", etc: "기타" };
+
 // 회고록 생성 (g는 작업세트가 반영된 장르 객체)
 export function buildMemoir(s, g, reason) {
   const createdDay = g.createdDay || 1;
   const evs = (s.eventHistory || []).filter(e => e.day >= createdDay && e.day <= s.day);
   // 하이라이트: 내가 쓴 포스트 우선, 그다음 ♥ 순
   const highlights = [...(g.snsHistory || [])].filter(p => p.text).sort((a, b) => ((b.isMine ? 1 : 0) - (a.isMine ? 1 : 0)) || ((b.likes || 0) - (a.likes || 0))).slice(0, 3).map(p => ({ from: p.from, text: p.text, likes: p.likes || 0, mine: !!p.isMine }));
+  // 성향 서사: 이 장르를 파는 동안 어디에 돈을 태웠나 (장르 생성 시 스냅샷과의 차분, 스냅샷 없으면 생략)
+  const baseSpend = (g.statsAt && g.statsAt.spend) || null;
+  const nowSpend = (s.stats && s.stats.spend) || {};
+  const spendTop = baseSpend
+    ? Object.keys(nowSpend).map(k => ({ cat: k, label: CAT_LABEL[k] || k, amount: (nowSpend[k] || 0) - (baseSpend[k] || 0) })).filter(x => x.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 3)
+    : [];
   return {
+    goldAtClose: s.gold, spendTop,
     id: "mem_" + g.id, genreId: g.id, genreName: g.name, media: [g.media, g.mediaGenre, g.type].filter(Boolean).join(" · "),
     createdDay, closedDay: s.day, days: Math.max(1, s.day - createdDay + 1),
     events: evs.length, totalSales: evs.reduce((a, e) => a + (e.goldEarned || 0), 0),
@@ -84,5 +93,6 @@ export function refandomBonus(s, newGenreName) {
 export function applyRefandom(s, bonus) {
   const archive = (s.archive || []).map(m => m.id === bonus.memoir.id ? { ...m, refandomCount: (m.refandomCount || 0) + 1 } : m);
   let ns = { ...s, archive, followers: (s.followers || 0) + bonus.followers };
-  return pushMessage(ns, { from: "mabo", avatar: "🐦", text: `[회귀 감지] "${bonus.memoir.genreName}"... 다시 돌아오셨군요? 예전 팬 ${bonus.followers}명이 새 계정을 알아봤어요. 흑역사가 발굴될지도 모르니 조심 🔥` });
+  const seed = bonus.memoir.goldAtClose != null ? ` 그때 지갑에 남겼던 ₩${bonus.memoir.goldAtClose.toLocaleString()}이 이번 덕질의 시드머니네요.` : "";
+  return pushMessage(ns, { from: "mabo", avatar: "🐦", text: `[회귀 감지] "${bonus.memoir.genreName}"... 다시 돌아오셨군요? 예전 팬 ${bonus.followers}명이 새 계정을 알아봤어요.${seed} 흑역사가 발굴될지도 모르니 조심 🔥` });
 }

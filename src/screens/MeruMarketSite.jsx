@@ -50,8 +50,9 @@ export default function MeruMarketSite({ state, setState }) {
               const sold = boughtToday(state, l.key);
               const rc = l.item ? rarityOf(l.item.rarity).color : "#ffd166";
               return (
-                <div key={l.key} style={{ ...card, padding: 14, position: "relative", outline: l.fake ? "2px dashed #e94560" : "none" }}>
+                <div key={l.key} style={{ ...card, padding: 14, position: "relative", outline: l.fake ? "2px dashed #e94560" : l.legend ? "2.5px solid #ffd166" : "none", boxShadow: l.legend ? "0 0 18px rgba(255,209,102,0.35)" : card.boxShadow, background: l.legend ? "linear-gradient(135deg,#fff,#fffaf0)" : "#fff" }}>
                   {l.fake && <span style={{ position: "absolute", top: 8, right: 8, fontSize: 9, fontWeight: 900, color: "#fff", background: "#e94560", padding: "2px 8px", borderRadius: 9 }}>특가!! 급처 🔥</span>}
+                  {l.legend && <span style={{ position: "absolute", top: 8, right: 8, fontSize: 9, fontWeight: 900, color: "#5b4400", background: "linear-gradient(90deg,#ffd166,#ffb347)", padding: "2px 8px", borderRadius: 9 }}>✨ 전설의 절판품</span>}
                   {l.ticket
                     ? <div style={{ height: 130, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6 }}><span style={{ fontSize: 44 }}>🎫</span><span style={{ fontSize: 12, fontWeight: 800, color: "#d13a5a" }}>양도 티켓 (프리미엄)</span></div>
                     : <div style={{ height: 130, display: "flex", justifyContent: "center", padding: 4 }}><OfficialImg item={l.item} style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} /></div>}
@@ -113,7 +114,7 @@ export default function MeruMarketSite({ state, setState }) {
         <div onClick={e => e.stopPropagation()} style={{ width: 400, background: "#fff", borderRadius: 18, padding: 24, boxShadow: "0 20px 60px rgba(0,60,45,0.3)" }}>
           {confirm.kind === "buy" && <>
             <div style={{ fontSize: 16, fontWeight: 900, marginBottom: 8 }}>{confirm.l.ticket ? `양도 티켓을 살까요?` : `${confirm.l.item.name}`}</div>
-            <div style={{ fontSize: 13, color: "#7a9a90", lineHeight: 1.8, marginBottom: 16 }}>{KRW(confirm.l.price)} 결제됩니다.{confirm.l.fake ? <b style={{ color: "#e94560" }}><br />...근데 이 가격, 좀 수상하지 않아요?</b> : confirm.l.ticket ? " 정가의 3배지만... 못 가는 것보단 낫죠." : " 절판템은 오늘 놓치면 끝이에요."}</div>
+            <div style={{ fontSize: 13, color: "#7a9a90", lineHeight: 1.8, marginBottom: 16 }}>{KRW(confirm.l.price)} 결제됩니다.{confirm.l.fake ? <b style={{ color: "#e94560" }}><br />...근데 이 가격, 좀 수상하지 않아요?</b> : confirm.l.legend ? <b style={{ color: "#b98700" }}><br />박물관급 진품. 평생에 한 번 볼까 말까 한 물건이에요.</b> : confirm.l.ticket ? " 정가의 3배지만... 못 가는 것보단 낫죠." : " 절판템은 오늘 놓치면 끝이에요."}</div>
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setConfirm(null)} style={{ flex: 1, padding: 12, borderRadius: 11, border: "1px solid #ddd", background: "#fff", color: "#888", fontWeight: 700, cursor: "pointer" }}>참는다</button>
               <button onClick={() => { setState(s => buyListing(s, confirm.l)); setConfirm(null); doToast(confirm.l.fake ? "결제 완료... 제발 진품이길 🙏" : "구매 완료! 메시지를 확인하세요 📦"); }} style={{ flex: 2, padding: 12, borderRadius: 11, border: "none", background: MINT, color: "#fff", fontWeight: 800, cursor: "pointer" }}>{KRW(confirm.l.price)} 결제</button>

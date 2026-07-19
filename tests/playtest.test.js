@@ -11,7 +11,7 @@ import { canPackToday, doPack } from "../src/systems/packingSystem.js";
 import { canWorkCommission, doCommission, expireCommission } from "../src/systems/commissionSystem.js";
 import { doGacha, PITY, GACHA_COST } from "../src/systems/gachaSystem.js";
 import { marketListings, buyListing, boughtToday, sellStock, sellDupe } from "../src/systems/marketSystem.js";
-import { resolveTicketing, attendFanEvent, missFanEvents, enterRaffle, resolveRaffle } from "../src/systems/fanEventSystem.js";
+import { resolveTicketing, attendFanEvent, missFanEvents, enterRaffle, resolveRaffle, planHostedCafe, planTrip, HOST_COST, TRIP_COST } from "../src/systems/fanEventSystem.js";
 import { logTx } from "../src/systems/bankSystem.js";
 import { normalizeLoaded } from "../src/systems/genreSystem.js";
 
@@ -324,6 +324,59 @@ describe("백로그: 가챠·메루마켓·티켓팅·응모", () => {
     const done = resolveRaffle({ ...s, day: s.rafflePending.resultDay });
     expect(done.rafflePending).toBe(null);
     expect(done.messages.some(m => m.text.includes("당첨") || m.text.includes("아쉽게도"))).toBe(true);
+  });
+});
+
+describe("셀프 기획·전설 매물·회고록 서사", () => {
+  it("생카 주최: 선결제 → 참석 시 팔로워·주최 특전 / 잠수 시 팬신뢰 타격", () => {
+    let s = newState(); s = { ...s, gold: 200000, fame: 60 };
+    s = planHostedCafe(s);
+    expect(s.gold).toBe(200000 - HOST_COST);
+    expect(s.stats.spend.hosting).toBe(HOST_COST);
+    expect(s.fanEvents.length).toBe(1);
+    expect(planTrip(s)).toBe(s); // 셀프 기획은 한 번에 하나
+    // 참석
+    let a = { ...s, day: s.fanEvents[0].day, actionsToday: 0, mentalHealth: 50, followers: 0 };
+    a = attendFanEvent(a);
+    expect(a.fanEvents.length).toBe(0);
+    expect(a.followers).toBeGreaterThan(0);
+    expect(a.collection.some(c => c.name.includes("주최 특전"))).toBe(true);
+    // 주최자 잠수
+    let m = { ...s, day: s.fanEvents[0].day + 1, mentalHealth: 50, fanTrust: 50 };
+    m = missFanEvents(m);
+    expect(m.mentalHealth).toBe(35);
+    expect(m.fanTrust).toBe(40);
+  });
+  it("성지순례: 선결제 → 기념품 확정 + 멘탈 대충전", () => {
+    let s = newState(); s = { ...s, gold: 400000 };
+    s = planTrip(s);
+    expect(s.stats.spend.trip).toBe(TRIP_COST);
+    let a = { ...s, day: s.fanEvents[0].day, actionsToday: 0, mentalHealth: 40 };
+    a = attendFanEvent(a);
+    expect(a.collection.some(c => c.name.includes("성지 한정"))).toBe(true);
+    expect(a.mentalHealth).toBeGreaterThanOrEqual(80);
+  });
+  it("전설의 절판품: 등장하면 30만+ 진품 확정", () => {
+    let s = newState(); let legend = null, foundDay = 1;
+    for (let d = 1; d <= 90 && !legend; d++) { legend = marketListings({ ...s, day: d }).find(x => x.legend); if (legend) foundDay = d; }
+    expect(legend).toBeTruthy();
+    expect(legend.price).toBeGreaterThanOrEqual(300000);
+    let b = { ...s, day: foundDay, gold: 1000000 };
+    b = buyListing(b, legend);
+    expect(b.collection.length).toBe(1);
+    expect(b.collection[0].name.startsWith("전설의")).toBe(true);
+    expect(b.messages.some(m => m.text.includes("가보"))).toBe(true);
+  });
+  it("회고록 서사: 남은 골드와 장르 지출 톱 기록", () => {
+    let s = newState();
+    const g2 = { ...s.genre, statsAt: { spend: {}, earn: {} } };
+    s = { ...s, gold: 777000, genre: g2, genres: [g2] };
+    s = logTx(s, -50000, "가챠 10연", "🎰", "gacha");
+    const c = closeGenre(s, "g1", "done");
+    const m = c.archive[0];
+    expect(m.goldAtClose).toBe(727000);
+    expect(m.spendTop[0].cat).toBe("gacha");
+    expect(m.spendTop[0].amount).toBe(50000);
   });
 });
 

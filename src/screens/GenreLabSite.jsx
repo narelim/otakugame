@@ -62,7 +62,7 @@ export default function GenreLabSite({state,setState}){
       const first=(s.genres||[]).length===0;
       let genres=(s.genres||[]).map(g0=>g0.id===s.activeGenreId?{...g0,fame:s.fame,followers:s.followers,fanTrust:s.fanTrust,engagement:s.engagement,snsHistory:s.snsHistory}:g0);
       const id="genre_"+Date.now();
-      const ng={...base,id,createdDay:s.day,isActive:true,fame:0,followers:0,fanTrust:50,engagement:50,assignedNPCs:assigned,imageTicketUsed:0,imageTicketMax:5,eventHistory:[],snsHistory:[]};
+      const ng={...base,id,createdDay:s.day,isActive:true,fame:0,followers:0,fanTrust:50,engagement:50,assignedNPCs:assigned,imageTicketUsed:0,imageTicketMax:5,eventHistory:[],snsHistory:[],statsAt:JSON.parse(JSON.stringify(s.stats||{spend:{},earn:{}}))};
       ng.eventSchedule=generateEventSchedule(ng,s.day);
       genres=[...genres,ng];
       const cost=first?{}:{stamina:Math.max(0,(s.stamina||0)-20),mentalHealth:Math.max(0,(s.mentalHealth||0)-10)};
@@ -106,6 +106,10 @@ export default function GenreLabSite({state,setState}){
           <span style={{marginLeft:"auto",fontSize:12,color:T.mut,fontWeight:700}}>{m.reasonIcon} {m.reasonLabel}</span>
         </div>
         <div style={{fontSize:12,color:T.mut,marginTop:6,lineHeight:1.7}}>Day {m.createdDay} ~ {m.closedDay} · <b>{m.days}일의 덕질</b> · 행사 {m.events}회 · 총 판매 ₩{(m.totalSales||0).toLocaleString()} · 팔로워 {(m.followers||0).toLocaleString()} · 인지도 {m.fame}pt{m.refandomCount?<span style={{color:T.acc}}> · 🔁 복덕 {m.refandomCount}회</span>:null}</div>
+        {(m.goldAtClose!=null||m.spendTop&&m.spendTop.length>0)&&<div style={{fontSize:12,color:"#8a7a5e",marginTop:5,lineHeight:1.7}}>
+          {m.goldAtClose!=null&&<>💰 지갑에 ₩{m.goldAtClose.toLocaleString()}을 남기고 떠났다</>}
+          {m.spendTop&&m.spendTop.length>0&&<> · 그동안 태운 곳: {m.spendTop.map(x=>`${x.label} ₩${x.amount.toLocaleString()}`).join(" · ")}</>}
+        </div>}
         {m.highlights&&m.highlights.length>0&&<div style={{marginTop:10,borderTop:`1px dashed ${T.bd}`,paddingTop:9}}>
           <div style={{fontSize:10,color:T.dim,marginBottom:4}}>그때의 타임라인</div>
           {m.highlights.map((h,i)=><div key={i} style={{fontSize:12,color:"#7a6a52",lineHeight:1.8}}>💬 "{h.text}" <span style={{color:T.dim,fontSize:10}}>— {h.from} · ♥{h.likes}</span></div>)}

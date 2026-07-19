@@ -50,14 +50,51 @@ export function expireTicketing(s) {
   return pushMessage({ ...s, ticketing: null }, { from: "티켓팅 알림", avatar: "🎫", text: `『${tk.name}』 예매 기간이 지났어요... 다음 기회에.` });
 }
 
+// ── 셀프 기획: 생일카페 주최 / 성지순례 여행 (한 번에 큰돈, 필수 아님) ──
+export const HOST_COST = 120000;  // 대관 + 특전 제작
+export const TRIP_COST = 250000;  // 교통 + 숙소 + 성지 굿즈 예산
+export const hasSelfPlan = (s) => (s.fanEvents || []).some(f => f.hosted || f.trip);
+// 생일카페 주최: 선결제 → 7일 뒤 오픈. 방문자(인지도 기반)만큼 팔로워·인지도, 주최 특전 수집품
+export function planHostedCafe(s) {
+  if (!s.genre || (s.gold || 0) < HOST_COST || hasSelfPlan(s)) return s;
+  const ch = s.genre.characters && s.genre.characters[0];
+  const name = `${(ch && ch.name) || s.genre.name} 생일카페`;
+  let ns = logTx(s, -HOST_COST, `『${name}』 대관·특전 제작 (주최)`, "🎂", "hosting");
+  ns = { ...ns, fanEvents: [...(ns.fanEvents || []), { day: s.day + 7, name, icon: "🎂", cost: 0, mental: 25, hosted: true }] };
+  return pushMessage(ns, { from: "티켓팅 알림", avatar: "🎂", text: `[주최 확정] 내가 여는 『${name}』 — Day ${s.day + 7} 오픈! 대관과 특전 준비 완료. mabo에 홍보 포스트를 올려두면 좋을지도?` });
+}
+// 성지순례 여행: 선결제 → 5일 뒤 출발. 멘탈 대충전 + 성지 한정 기념품 확정
+export function planTrip(s) {
+  if (!s.genre || (s.gold || 0) < TRIP_COST || hasSelfPlan(s)) return s;
+  const name = `${s.genre.name} 성지순례 여행`;
+  let ns = logTx(s, -TRIP_COST, `『${name}』 예약 (교통·숙소)`, "✈️", "trip");
+  ns = { ...ns, fanEvents: [...(ns.fanEvents || []), { day: s.day + 5, name, icon: "✈️", cost: 0, mental: 40, trip: true }] };
+  return pushMessage(ns, { from: "티켓팅 알림", avatar: "✈️", text: `[예약 완료] 『${name}』 — Day ${s.day + 5} 출발! 캐리어부터 꺼내자. 통장은 이미 출발했다...` });
+}
+
 // ── 참석/놓침 ──
 export const todaysFanEvent = (s) => (s.fanEvents || []).find(f => f.day === s.day) || null;
 export function attendFanEvent(s) {
   const fe = todaysFanEvent(s);
   if (!fe || (s.actionsToday || 0) >= ACT_MAX || (s.gold || 0) < fe.cost) return s;
-  let ns = { ...s, fanEvents: s.fanEvents.filter(f => f !== fe), actionsToday: (s.actionsToday || 0) + 1, stamina: Math.max(0, (s.stamina || 0) - 8) };
-  ns = logTx(ns, -fe.cost, `${fe.name} 입장·현장 굿즈`, fe.icon, "ticket");
+  let ns = { ...s, fanEvents: s.fanEvents.filter(f => f !== fe), actionsToday: (s.actionsToday || 0) + 1, stamina: Math.max(0, (s.stamina || 0) - (fe.trip ? 14 : 8)) };
+  if (fe.cost > 0) ns = logTx(ns, -fe.cost, `${fe.name} 입장·현장 굿즈`, fe.icon, "ticket");
   ns = { ...ns, mentalHealth: Math.min(100, (ns.mentalHealth || 0) + fe.mental) };
+  if (fe.hosted) {
+    // 주최: 방문자 수 = 인지도 기반 → 팔로워·인지도 보상 + 주최 특전(SR 확정)
+    const visitors = 8 + Math.floor((ns.fame || 0) / 12 * (0.7 + Math.random() * 0.6));
+    const p = { ...rollItemParams(ns.genre, Math.floor(Math.random() * 2 ** 31)), rarity: "SR" };
+    const g = addCollectionItem(ns, { ...p, name: `${p.name} (주최 특전)` }); ns = g.state;
+    ns = { ...ns, followers: (ns.followers || 0) + Math.floor(visitors * 0.6), fame: (ns.fame || 0) + Math.floor(visitors * 0.3) };
+    return pushMessage(ns, { from: "티켓팅 알림", avatar: "🎂", text: `『${fe.name}』 대성황!! 방문자 ${visitors}명, 특전도 순삭 🎉 "주최자님 감사해요"라는 말에 눈물이... (팔로워 +${Math.floor(visitors * 0.6)}, 멘탈 +${fe.mental})` });
+  }
+  if (fe.trip) {
+    // 여행: 성지 한정 기념품 확정 + 자랑거리
+    const p = rollItemParams(ns.genre, Math.floor(Math.random() * 2 ** 31));
+    const g = addCollectionItem(ns, { ...p, name: `${p.name} (성지 한정)` }); ns = g.state;
+    ns = { ...ns, fame: (ns.fame || 0) + 5 };
+    return pushMessage(ns, { from: "티켓팅 알림", avatar: "✈️", text: `『${fe.name}』에서 돌아왔다. 성지의 공기 그 자체가 힐링... ${p.name}도 겟 (멘탈 +${fe.mental}, 몸은 녹초)` });
+  }
   if (Math.random() < 0.5) {
     const p = rollItemParams(ns.genre, Math.floor(Math.random() * 2 ** 31));
     const g = addCollectionItem(ns, p); ns = g.state;
@@ -68,8 +105,17 @@ export function attendFanEvent(s) {
 export function missFanEvents(s) {
   const missed = (s.fanEvents || []).filter(f => f.day < s.day);
   if (!missed.length) return s;
-  let ns = { ...s, fanEvents: s.fanEvents.filter(f => f.day >= s.day), mentalHealth: Math.max(0, (s.mentalHealth || 0) - 8 * missed.length) };
-  missed.forEach(f => { ns = pushMessage(ns, { from: "티켓팅 알림", avatar: "🎫", text: `『${f.name}』에 결국 못 갔다... 어렵게 구한 표였는데 (멘탈 -8)` }); });
+  let ns = { ...s, fanEvents: s.fanEvents.filter(f => f.day >= s.day) };
+  missed.forEach(f => {
+    if (f.hosted) {
+      // 주최자가 잠수 — 최악의 사고
+      ns = { ...ns, mentalHealth: Math.max(0, (ns.mentalHealth || 0) - 15), fanTrust: Math.max(0, (ns.fanTrust || 0) - 10) };
+      ns = pushMessage(ns, { from: "티켓팅 알림", avatar: "🎂", text: `내가 주최한 『${f.name}』에 내가 못 갔다... 참가자들에게 뭐라고 하지 (멘탈 -15, 팬신뢰 -10)` });
+    } else {
+      ns = { ...ns, mentalHealth: Math.max(0, (ns.mentalHealth || 0) - 8) };
+      ns = pushMessage(ns, { from: "티켓팅 알림", avatar: "🎫", text: `『${f.name}』에 결국 못 갔다... 어렵게 구한 표였는데 (멘탈 -8)` });
+    }
+  });
   return ns;
 }
 

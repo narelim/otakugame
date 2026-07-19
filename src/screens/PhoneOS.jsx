@@ -98,7 +98,7 @@ export default function PhoneOS({state,setState,onClose}){
   else if(top.app==="factory")content=<FactoryStatusApp state={state}/>;
   else if(top.app==="collection")content=<CollectionApp state={state}/>;
   else if(top.app==="gacha")content=<GachaApp state={state} setState={setState}/>;
-  else if(top.app==="calendar")content=<CalendarApp state={state}/>;
+  else if(top.app==="calendar")content=<CalendarApp state={state} setState={setState}/>;
 
   return(<div style={{width:"100%",height:"100%",display:"flex",flexDirection:"column",background:"#0a0a18",border:"1.5px solid #2a2a4a",borderRadius:"30px",overflow:"hidden",boxShadow:"0 24px 70px rgba(0,0,0,0.7)"}}>
     <PhoneStatusBar state={state}/>
