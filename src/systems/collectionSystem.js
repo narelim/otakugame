@@ -25,7 +25,9 @@ export function collectionSets(state) {
 // 공식 굿즈 구경·가챠·메루마켓·응모 당첨이 전부 이 함수를 통해 덕질장에 들어온다.
 export function addCollectionItem(state, p) {
   const col = [...(state.collection || [])];
-  const dupIdx = col.findIndex(it => it.char === p.char && it.type === p.type && it.motif === p.motif && it.rarity === p.rarity);
+  // name까지 일치해야 같은 슬롯 — 일반 굿즈는 이름이 파라미터로 결정되어 동작 동일하고,
+  // 특별판(전설의·주최 특전·성지 한정)은 별도 칸을 가진다 (₩30만 가보가 "이미 있는 굿즈 +1"이 되지 않게)
+  const dupIdx = col.findIndex(it => it.char === p.char && it.type === p.type && it.motif === p.motif && it.rarity === p.rarity && (it.name || "") === (p.name || ""));
   let isNew = false;
   if (dupIdx >= 0) col[dupIdx] = { ...col[dupIdx], count: (col[dupIdx].count || 1) + 1 };
   else { col.push({ ...p, count: 1, day: state.day }); isNew = true; }
